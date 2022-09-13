@@ -152,11 +152,11 @@ class LevelCompactionBuilder {
 void LevelCompactionBuilder::PickFileToCompact(
     const autovector<std::pair<int, FileMetaData*>>& level_files,
     bool compact_to_next_level) {
-  for (auto& level_file : level_files) {
+  for (auto& level_file : level_files) { //枚举所有level的files
     // If it's being compacted it has nothing to do here.
     // If this assert() fails that means that some function marked some
     // files as being_compacted, but didn't call ComputeCompactionScore()
-    assert(!level_file.second->being_compacted);
+    assert(!level_file.second->being_compacted);//有其他的thread正在compact
     start_level_ = level_file.first;
     if ((compact_to_next_level &&
          start_level_ == vstorage_->num_non_empty_levels() - 1) ||
@@ -166,7 +166,7 @@ void LevelCompactionBuilder::PickFileToCompact(
     }
     if (compact_to_next_level) {
       output_level_ =
-          (start_level_ == 0) ? vstorage_->base_level() : start_level_ + 1;
+          (start_level_ == 0) ? vstorage_->base_level() : start_level_ + 1;  //设置输出的level
     } else {
       output_level_ = start_level_;
     }
@@ -451,7 +451,7 @@ bool LevelCompactionBuilder::SetupOtherInputsIfNeeded() {
 Compaction* LevelCompactionBuilder::PickCompaction() {
   // Pick up the first file to start compaction. It may have been extended
   // to a clean cut.
-  SetupInitialFiles();
+  SetupInitialFiles(); //初始化需要compact的文件
   if (start_level_inputs_.empty()) {
     return nullptr;
   }
@@ -459,13 +459,13 @@ Compaction* LevelCompactionBuilder::PickCompaction() {
 
   // If it is a L0 -> base level compaction, we need to set up other L0
   // files if needed.
-  if (!SetupOtherL0FilesIfNeeded()) {
+  if (!SetupOtherL0FilesIfNeeded()) { //如果需要的话，选择L0的文件
     return nullptr;
   }
 
   // Pick files in the output level and expand more files in the start level
   // if needed.
-  if (!SetupOtherInputsIfNeeded()) {
+  if (!SetupOtherInputsIfNeeded()) { //选择对应的输出文件
     return nullptr;
   }
 

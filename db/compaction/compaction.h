@@ -49,6 +49,7 @@ struct AtomicCompactionUnitBoundary {
   const InternalKey* largest = nullptr;
 };
 
+//使用此结构维护同一个level中所有的SST files
 // The structure that manages compaction input files associated
 // with the same physical level.
 struct CompactionInputFiles {

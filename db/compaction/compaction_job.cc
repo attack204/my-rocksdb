@@ -578,7 +578,7 @@ Status CompactionJob::Run() {
   log_buffer_->FlushBufferToLog();
   LogCompaction();
 
-  const size_t num_threads = compact_->sub_compact_states.size();
+  const size_t num_threads = compact_->sub_compact_states.size(); //线程数量
   assert(num_threads > 0);
   const uint64_t start_micros = db_options_.clock->NowMicros();
 
@@ -1935,7 +1935,7 @@ void CompactionJob::UpdateCompactionJobStats(
 void CompactionJob::LogCompaction() {
   Compaction* compaction = compact_->compaction;
   ColumnFamilyData* cfd = compaction->column_family_data();
-
+  printf("%d", job_id_);
   // Let's check if anything will get logged. Don't prepare all the info if
   // we're not logging
   if (db_options_.info_log_level <= InfoLogLevel::INFO_LEVEL) {
@@ -1950,18 +1950,21 @@ void CompactionJob::LogCompaction() {
                    cfd->GetName().c_str(), scratch);
     // build event logger report
     auto stream = event_logger_->Log();
+
     stream << "job" << job_id_ << "event"
            << "compaction_started"
            << "compaction_reason"
            << GetCompactionReasonString(compaction->compaction_reason());
     for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
       stream << ("files_L" + std::to_string(compaction->level(i)));
+      printf(" %d", compaction->level(i));
       stream.StartArray();
       for (auto f : *compaction->inputs(i)) {
         stream << f->fd.GetNumber();
       }
       stream.EndArray();
     }
+    puts("");
     stream << "score" << compaction->score() << "input_data_size"
            << compaction->CalculateTotalInputSize() << "oldest_snapshot_seqno"
            << (existing_snapshots_.empty()

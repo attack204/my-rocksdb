@@ -2607,9 +2607,9 @@ ColumnFamilyData* DBImpl::PickCompactionFromQueue(
   assert(*token == nullptr);
   autovector<ColumnFamilyData*> throttled_candidates;
   ColumnFamilyData* cfd = nullptr;
-  while (!compaction_queue_.empty()) {
-    auto first_cfd = *compaction_queue_.begin();
-    compaction_queue_.pop_front();
+  while (!compaction_queue_.empty()) { //当队列不为空时
+    auto first_cfd = *compaction_queue_.begin(); //取队列头的任务
+    compaction_queue_.pop_front(); //删除队列头的任务
     assert(first_cfd->queued_for_compaction());
     if (!RequestCompactionToken(first_cfd, false, token, log_buffer)) {
       throttled_candidates.push_back(first_cfd);
@@ -2924,6 +2924,7 @@ void DBImpl::BackgroundCallFlush(Env::Priority thread_pri) {
   }
 }
 
+//触发compaction的后台线程
 void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
                                       Env::Priority bg_thread_pri) {
   bool made_progress = false;
@@ -2932,6 +2933,9 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
   LogBuffer log_buffer(InfoLogLevel::INFO_LEVEL,
                        immutable_db_options_.info_log.get());
   {
+    //在Pick的过程中加db锁
+    //在BackgroundCompaction构造完compaction_job之前都需要加锁
+    //Compaction_job.Run()会解锁，跑完再加锁
     InstrumentedMutexLock l(&mutex_);
 
     // This call will unlock/lock the mutex to wait for current running
@@ -2947,6 +2951,7 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
     assert((bg_thread_pri == Env::Priority::BOTTOM &&
             bg_bottom_compaction_scheduled_) ||
            (bg_thread_pri == Env::Priority::LOW && bg_compaction_scheduled_));
+    //进行Compaction
     Status s = BackgroundCompaction(&made_progress, &job_context, &log_buffer,
                                     prepicked_compaction, bg_thread_pri);
     TEST_SYNC_POINT("BackgroundCallCompaction:1");
@@ -3059,7 +3064,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
   ManualCompactionState* manual_compaction =
       prepicked_compaction == nullptr
           ? nullptr
-          : prepicked_compaction->manual_compaction_state;
+          : prepicked_compaction->manual_compaction_state; //看一下有没有手动触发的Compaction
   *made_progress = false;
   mutex_.AssertHeld();
   TEST_SYNC_POINT("DBImpl::BackgroundCompaction:Start");
@@ -3169,6 +3174,7 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
       return Status::OK();
     }
 
+    //从Queue中拿取Compaction任务
     auto cfd = PickCompactionFromQueue(&task_token, log_buffer);
     if (cfd == nullptr) {
       // Can't find any executable task from the compaction queue.
