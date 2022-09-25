@@ -76,6 +76,7 @@ IOStatus CompactionOutputs::WriterSyncClose(const Status& input_status,
   return io_s;
 }
 
+//重点观察对象
 Status CompactionOutputs::AddToOutput(
     const CompactionIterator& c_iter,
     const CompactionFileOpenFunc& open_file_func,

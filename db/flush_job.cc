@@ -48,6 +48,16 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+enum LOG_TYPE {
+  FLUSH = 1,
+  COMPACTION = 2,
+  OTHER = 10
+};
+
+extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
+extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
+
+
 const char* GetFlushReasonString (FlushReason flush_reason) {
   switch (flush_reason) {
     case FlushReason::kOthers:
@@ -313,6 +323,8 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
   }
   RecordFlushIOStats();
 
+  log_print("Flush", LOG_TYPE::FLUSH, edit_->GetNewFiles().back().first, nullptr);
+
   // When measure_io_stats_ is true, the default 512 bytes is not enough.
   auto stream = event_logger_->LogToBuffer(log_buffer_, 1024);
   stream << "job" << job_context_->job_id << "event"
@@ -326,6 +338,10 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
     stream << vstorage->NumLevelFiles(level);
   }
   stream.EndArray();
+
+
+  after_flush_or_compaction(cfd_->current()->storage_info(), 0, std::vector<const CompactionOutputs::Output*>{}, nullptr);
+
 
   const auto& blob_files = vstorage->GetBlobFiles();
   if (!blob_files.empty()) {

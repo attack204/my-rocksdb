@@ -3779,9 +3779,9 @@ void VersionStorageInfo::UpdateFilesByCompactionPri(
 
     // sort the top number_of_files_to_sort_ based on file size
     size_t num = VersionStorageInfo::kNumberFilesToSort;
-    if (num > temp.size()) {
+    //if (num > temp.size()) {
       num = temp.size();
-    }
+    //}
     switch (ioptions.compaction_pri) {
       case kByCompensatedSize:
         std::partial_sort(temp.begin(), temp.begin() + num, temp.end(),

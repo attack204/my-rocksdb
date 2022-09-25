@@ -12,10 +12,10 @@
 using namespace std;
 using namespace rocksdb;
 
-const std::string PATH = "/tmp/rocksdb_tmp";
+const std::string PATH = "/tmp/test_rocksdb";
 
-const long long limit = 1e18;
-const int N = 3e7;
+const long long limit = 1e7;
+const int N = 1e5;
 long long get_random() {
   long long rd = rand();
   long long rd2 = rand();
@@ -28,17 +28,35 @@ int main() {
   start = clock();     //开始时间
   DB* db;
   Options options;
-  options.write_buffer_size = 4194304;
-
   options.create_if_missing = true;
-  // options.max_bytes_for_level_base=10485760;
-  options.max_bytes_for_level_base=1048;
+  const int B = 1;
+  const int KB = 1024;
+  const int MB = 1024 * 1024;
+  // options.max_bytes_for_level_base=10 * 1048;
+  // options.target_file_size_base=2097152;
+  // options.write_buffer_size = 4194304;
+  options.max_bytes_for_level_base= 1 * KB;
+  options.target_file_size_base = 1 * KB;
+  options.write_buffer_size = 2 * KB;
+  
+  options.max_bytes_for_level_multiplier=5;
 
+  options.max_background_compactions=1;
+  options.max_background_flushes=1;
+  options.max_background_jobs=1;
+
+  options.soft_pending_compaction_bytes_limit = options.target_file_size_base;
+  options.hard_pending_compaction_bytes_limit = options.target_file_size_base; //这里限制compaction的速率是因为rocksdb的flush速率特别快，不然来不及compaction
+
+  options.num_levels=7;
   options.level0_stop_writes_trigger=12;
   options.level0_slowdown_writes_trigger=8;
   options.level0_file_num_compaction_trigger=4;
   options.max_write_buffer_number=1;
+  options.compaction_style=kCompactionStyleLevel;
+  options.compaction_pri=kOldestLargestSeqFirst;
   options.max_open_files=1000;
+  options.target_file_size_multiplier=1;
 
   Status status = DB::Open(options, PATH, &db);
   assert(status.ok());
@@ -54,6 +72,7 @@ int main() {
       } else {
         printf("get failed\n");
       }
+      //printf("success %d\n", i);
     } else {
       printf("put failed\n");
     }

@@ -581,14 +581,18 @@ class VersionStorageInfo {
                                      const Slice& largest_user_key,
                                      int last_level, int last_l0_idx);
 
+ 
+  void UpdateFilesByCompactionPri(const ImmutableOptions& immutable_options,
+                                  const MutableCFOptions& mutable_cf_options);
+
+ 
+ 
  private:
   void ComputeCompensatedSizes();
   void UpdateNumNonEmptyLevels();
   void CalculateBaseBytes(const ImmutableOptions& ioptions,
                           const MutableCFOptions& options);
-  void UpdateFilesByCompactionPri(const ImmutableOptions& immutable_options,
-                                  const MutableCFOptions& mutable_cf_options);
-
+ 
   void GenerateFileIndexer() {
     file_indexer_.UpdateIndex(&arena_, num_non_empty_levels_, files_);
   }

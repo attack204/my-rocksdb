@@ -439,6 +439,7 @@ class Compaction {
   bool l0_files_might_overlap_;
 
   // Compaction input files organized by level. Constant after construction
+  //Compaction中的输入变量
   const std::vector<CompactionInputFiles> inputs_;
 
   // A copy of inputs_, organized more closely in memory

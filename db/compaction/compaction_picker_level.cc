@@ -157,7 +157,7 @@ void LevelCompactionBuilder::PickFileToCompact(
     // If this assert() fails that means that some function marked some
     // files as being_compacted, but didn't call ComputeCompactionScore()
     assert(!level_file.second->being_compacted);//有其他的thread正在compact
-    start_level_ = level_file.first;
+    start_level_ = level_file.first; //当前level的第一个SST file
     if ((compact_to_next_level &&
          start_level_ == vstorage_->num_non_empty_levels() - 1) ||
         (start_level_ == 0 &&
@@ -183,7 +183,7 @@ void LevelCompactionBuilder::PickFileToCompact(
 void LevelCompactionBuilder::SetupInitialFiles() {
   // Find the compactions by size on all levels.
   bool skipped_l0_to_base = false;
-  for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) {
+  for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) { //枚举所有level
     start_level_score_ = vstorage_->CompactionScore(i);
     start_level_ = vstorage_->CompactionScoreLevel(i);
     assert(i == 0 || start_level_score_ <= vstorage_->CompactionScore(i - 1));
@@ -714,9 +714,9 @@ bool LevelCompactionBuilder::PickFileToCompact() {
 
   unsigned int cmp_idx;
   for (cmp_idx = vstorage_->NextCompactionIndex(start_level_);
-       cmp_idx < file_scores.size(); cmp_idx++) {
-    int index = file_scores[cmp_idx];
-    auto* f = level_files[index];
+       cmp_idx < file_scores.size(); cmp_idx++) { //枚举所有将要被compact但是还未被compact的文件
+    int index = file_scores[cmp_idx]; //获取到实际要compact的文件的index
+    auto* f = level_files[index]; //获取到实际的SST file
 
     // do not pick a file to compact if it is being compacted
     // from n-1 level.
@@ -747,6 +747,8 @@ bool LevelCompactionBuilder::PickFileToCompact() {
       continue;
     }
 
+    //现在已经选取好了input level file
+    //接下来需要选取output level file
     // Now that input level is fully expanded, we check whether any output
     // files are locked due to pending compaction.
     //

@@ -59,6 +59,16 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+
+enum LOG_TYPE {
+  FLUSH = 1,
+  COMPACTION = 2,
+  OTHER = 10
+};
+
+extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
+extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
+
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
   switch (compaction_reason) {
     case CompactionReason::kUnknown:
@@ -576,7 +586,7 @@ Status CompactionJob::Run() {
       ThreadStatus::STAGE_COMPACTION_RUN);
   TEST_SYNC_POINT("CompactionJob::Run():Start");
   log_buffer_->FlushBufferToLog();
-  LogCompaction();
+  LogCompaction(); //print log before compaction
 
   const size_t num_threads = compact_->sub_compact_states.size(); //线程数量
   assert(num_threads > 0);
@@ -598,7 +608,7 @@ Status CompactionJob::Run() {
   for (auto& thread : thread_pool) {
     thread.join();
   }
-
+  //到这里实际上所有的sub_compaction都已经结束了
   compaction_stats_.SetMicros(db_options_.clock->NowMicros() - start_micros);
 
   for (auto& state : compact_->sub_compact_states) {
@@ -655,14 +665,19 @@ Status CompactionJob::Run() {
   if (status.ok()) {
     status = io_s;
   }
+
+
+
   if (status.ok()) {
+    //i get it 
     thread_pool.clear();
-    std::vector<const CompactionOutputs::Output*> files_output;
+    std::vector<const CompactionOutputs::Output*> files_output; //有一个很amazing的problem是这些output_file在cfd的version中都找不到
     for (const auto& state : compact_->sub_compact_states) {
       for (const auto& output : state.GetOutputs()) {
         files_output.emplace_back(&output);
       }
     }
+
     ColumnFamilyData* cfd = compact_->compaction->column_family_data();
     auto& prefix_extractor =
         compact_->compaction->mutable_cf_options()->prefix_extractor;
@@ -680,9 +695,11 @@ Status CompactionJob::Run() {
         // we will regard this verification as user reads since the goal is
         // to cache it here for further user reads
         ReadOptions read_options;
+
+        
         InternalIterator* iter = cfd->table_cache()->NewIterator(
             read_options, file_options_, cfd->internal_comparator(),
-            files_output[file_idx]->meta, /*range_del_agg=*/nullptr,
+            files_output[file_idx]->meta, /*range_del_agg=  */nullptr,
             prefix_extractor,
             /*table_reader_ptr=*/nullptr,
             cfd->internal_stats()->GetFileReadHist(
@@ -694,6 +711,8 @@ Status CompactionJob::Run() {
             /*smallest_compaction_key=*/nullptr,
             /*largest_compaction_key=*/nullptr,
             /*allow_unprepared_value=*/false);
+
+
         auto s = iter->status();
 
         if (s.ok() && paranoid_file_checks_) {
@@ -723,6 +742,8 @@ Status CompactionJob::Run() {
         }
       }
     };
+
+
     for (size_t i = 1; i < compact_->sub_compact_states.size(); i++) {
       thread_pool.emplace_back(verify_table,
                                std::ref(compact_->sub_compact_states[i].status));
@@ -738,6 +759,9 @@ Status CompactionJob::Run() {
         break;
       }
     }
+
+    tmp_files_output = files_output;
+   
   }
 
   ReleaseSubcompactionResources();
@@ -762,8 +786,9 @@ Status CompactionJob::Run() {
   RecordCompactionIOStats();
   LogFlush(db_options_.info_log);
   TEST_SYNC_POINT("CompactionJob::Run():End");
-
+  
   compact_->status = status;
+  
   return status;
 }
 
@@ -783,7 +808,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
                                             compaction_stats_);
 
   if (status.ok()) {
-    status = InstallCompactionResults(mutable_cf_options);
+    status = InstallCompactionResults(mutable_cf_options);//这里才是真正的把output_files update的函数
   }
   if (!versions_->io_status().ok()) {
     io_status_ = versions_->io_status();
@@ -791,6 +816,11 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
   VersionStorageInfo::LevelSummaryStorage tmp;
   auto vstorage = cfd->current()->storage_info();
+
+
+  vstorage->UpdateFilesByCompactionPri(*cfd->ioptions(), mutable_cf_options);
+  after_flush_or_compaction(vstorage, compact_->compaction->level(0), tmp_files_output, cfd);
+
   const auto& stats = compaction_stats_.stats;
 
   double read_write_amp = 0.0;
@@ -1588,6 +1618,7 @@ Status CompactionJob::FinishCompactionOutputFile(
   return s;
 }
 
+//被CompactionJob::Install调用
 Status CompactionJob::InstallCompactionResults(
     const MutableCFOptions& mutable_cf_options) {
   assert(compact_);
@@ -1935,7 +1966,9 @@ void CompactionJob::UpdateCompactionJobStats(
 void CompactionJob::LogCompaction() {
   Compaction* compaction = compact_->compaction;
   ColumnFamilyData* cfd = compaction->column_family_data();
-  printf("%d", job_id_);
+
+  log_print("Compaction", COMPACTION, compaction->level(0), compaction);
+
   // Let's check if anything will get logged. Don't prepare all the info if
   // we're not logging
   if (db_options_.info_log_level <= InfoLogLevel::INFO_LEVEL) {
@@ -1957,7 +1990,7 @@ void CompactionJob::LogCompaction() {
            << GetCompactionReasonString(compaction->compaction_reason());
     for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
       stream << ("files_L" + std::to_string(compaction->level(i)));
-      printf(" %d", compaction->level(i));
+     // printf(" %d", compaction->level(i));
       stream.StartArray();
       for (auto f : *compaction->inputs(i)) {
         stream << f->fd.GetNumber();

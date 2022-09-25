@@ -23,6 +23,7 @@ using CompactionFileOpenFunc = std::function<Status(CompactionOutputs&)>;
 using CompactionFileCloseFunc =
     std::function<Status(CompactionOutputs&, const Status&, const Slice&)>;
 
+//这个类非常重要，里面记录了output_的信息
 // Files produced by subcompaction, most of the functions are used by
 // compaction_job Open/Close compaction file functions.
 class CompactionOutputs {
