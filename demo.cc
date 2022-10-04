@@ -4,7 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-
+#include "env/env_zenfs.h"
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
@@ -14,8 +14,8 @@ using namespace rocksdb;
 
 const std::string PATH = "/tmp/test_rocksdb";
 
-const long long limit = 1e7;
-const int N = 1e5;
+const long long limit = 1e5;
+const int N = 2e5;
 long long get_random() {
   long long rd = rand();
   long long rd2 = rand();
@@ -29,6 +29,8 @@ int main() {
   DB* db;
   Options options;
   options.create_if_missing = true;
+  options.env = new ZenFSEnv("nullb0");
+
   const int B = 1;
   const int KB = 1024;
   const int MB = 1024 * 1024;
@@ -54,7 +56,7 @@ int main() {
   options.level0_file_num_compaction_trigger=4;
   options.max_write_buffer_number=1;
   options.compaction_style=kCompactionStyleLevel;
-  options.compaction_pri=kOldestLargestSeqFirst;
+  options.compaction_pri=kRoundRobin;
   options.max_open_files=1000;
   options.target_file_size_multiplier=1;
 
