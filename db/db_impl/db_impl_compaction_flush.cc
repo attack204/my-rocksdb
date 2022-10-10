@@ -3056,6 +3056,8 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
   }
 }
 
+//BackgroundCompaction是整个Compaction的PostMaster
+//其中最主要的三个阶段是Compaction::Prepare、Compaction::Run and Compaction::Install
 Status DBImpl::BackgroundCompaction(bool* made_progress,
                                     JobContext* job_context,
                                     LogBuffer* log_buffer,
@@ -3431,6 +3433,8 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
         db_id_, db_session_id_, c->column_family_data()->GetFullHistoryTsLow(),
         c->trim_ts(), &blob_callback_, &bg_compaction_scheduled_,
         &bg_bottom_compaction_scheduled_);
+
+    //Step1: Prepare()
     compaction_job.Prepare();
 
     NotifyOnCompactionBegin(c->column_family_data(), c.get(), status,
@@ -3438,11 +3442,13 @@ Status DBImpl::BackgroundCompaction(bool* made_progress,
     mutex_.Unlock();
     TEST_SYNC_POINT_CALLBACK(
         "DBImpl::BackgroundCompaction:NonTrivial:BeforeRun", nullptr);
+    //Step2: Run()
     // Should handle erorr?
     compaction_job.Run().PermitUncheckedError();
     TEST_SYNC_POINT("DBImpl::BackgroundCompaction:NonTrivial:AfterRun");
     mutex_.Lock();
 
+    //Step3: Install()
     status = compaction_job.Install(*c->mutable_cf_options());
     io_s = compaction_job.io_status();
     if (status.ok()) {

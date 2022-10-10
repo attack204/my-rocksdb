@@ -11,8 +11,11 @@
 #include "db/compaction/compaction_outputs.h"
 
 #include "db/builder.h"
+#include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
+
+extern void get_predict(int level, const FileMetaData &file, Version *v, int &predict_, int &predict_type_, int &tmp_rank);
 
 void CompactionOutputs::NewBuilder(const TableBuilderOptions& tboptions) {
   builder_.reset(NewTableBuilder(tboptions, file_writer_.get()));
@@ -21,6 +24,22 @@ void CompactionOutputs::NewBuilder(const TableBuilderOptions& tboptions) {
 Status CompactionOutputs::Finish(const Status& intput_status,
                                  const SeqnoToTimeMapping& seqno_time_mapping) {
   FileMetaData* meta = GetMetaData();
+  int predict;
+  int predict_type;
+  int rank;
+  const int output_level = GetCompaction()->output_level();
+
+  get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), predict, predict_type, rank);
+
+  fs_->SetFileLifetime(meta->fname, predict);
+
+  std::cout << "Finish:"
+            << meta->fd.GetNumber() 
+            << '[' << meta->smallest.user_key().ToString() <<  ','
+            << meta->largest.user_key().ToString() << ']' 
+            << "lifetime=" << predict
+            << '\n';
+
   assert(meta != nullptr);
   Status s = intput_status;
   if (s.ok()) {
@@ -101,7 +120,7 @@ Status CompactionOutputs::AddToOutput(
 
   // Open output file if necessary
   if (!HasBuilder()) {
-    s = open_file_func(*this);
+    s = open_file_func(*this); //在这里调用OpenCompactionOutputFile
   }
   if (!s.ok()) {
     return s;

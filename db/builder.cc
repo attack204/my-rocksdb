@@ -147,7 +147,10 @@ Status BuildTable(
       bool use_direct_writes = file_options.use_direct_writes;
       TEST_SYNC_POINT_CALLBACK("BuildTable:create_file", &use_direct_writes);
 #endif  // !NDEBUG
-      IOStatus io_s = NewWritableFile(fs, fname, &file, file_options);
+      //file_options.lifetime = 1000;
+      FileOptions tmp_file_options = file_options;
+      tmp_file_options.lifetime = 100;
+      IOStatus io_s = NewWritableFile(fs, fname, &file, tmp_file_options);
       assert(s.ok());
       s = io_s;
       if (io_status->ok()) {

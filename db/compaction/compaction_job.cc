@@ -235,81 +235,81 @@ void CompactionJob::ReportStartedCompaction(Compaction* compaction) {
   compaction_job_stats_->is_full_compaction = compaction->is_full_compaction();
 }
 
-void CompactionJob::Prepare() {
-  AutoThreadOperationStageUpdater stage_updater(
-      ThreadStatus::STAGE_COMPACTION_PREPARE);
+  void CompactionJob::Prepare() {
+    AutoThreadOperationStageUpdater stage_updater(
+        ThreadStatus::STAGE_COMPACTION_PREPARE);
 
-  // Generate file_levels_ for compaction before making Iterator
-  auto* c = compact_->compaction;
-  ColumnFamilyData* cfd = c->column_family_data();
-  assert(cfd != nullptr);
-  assert(cfd->current()->storage_info()->NumLevelFiles(
-             compact_->compaction->level()) > 0);
+    // Generate file_levels_ for compaction before making Iterator
+    auto* c = compact_->compaction;
+    ColumnFamilyData* cfd = c->column_family_data();
+    assert(cfd != nullptr);
+    assert(cfd->current()->storage_info()->NumLevelFiles(
+              compact_->compaction->level()) > 0);
 
-  write_hint_ = cfd->CalculateSSTWriteHint(c->output_level());
-  bottommost_level_ = c->bottommost_level();
+    write_hint_ = cfd->CalculateSSTWriteHint(c->output_level());
+    bottommost_level_ = c->bottommost_level();
 
-  if (c->ShouldFormSubcompactions()) {
-    StopWatch sw(db_options_.clock, stats_, SUBCOMPACTION_SETUP_TIME);
-    GenSubcompactionBoundaries();
-  }
-  if (boundaries_.size() > 1) {
-    for (size_t i = 0; i <= boundaries_.size(); i++) {
-      compact_->sub_compact_states.emplace_back(
-          c, (i != 0) ? std::optional<Slice>(boundaries_[i - 1]) : std::nullopt,
-          (i != boundaries_.size()) ? std::optional<Slice>(boundaries_[i])
-                                    : std::nullopt,
-          static_cast<uint32_t>(i));
-      // assert to validate that boundaries don't have same user keys (without
-      // timestamp part).
-      assert(i == 0 || i == boundaries_.size() ||
-             cfd->user_comparator()->CompareWithoutTimestamp(
-                 boundaries_[i - 1], true, boundaries_[i], true) < 0);
+    if (c->ShouldFormSubcompactions()) {
+      StopWatch sw(db_options_.clock, stats_, SUBCOMPACTION_SETUP_TIME);
+      GenSubcompactionBoundaries();
     }
-    RecordInHistogram(stats_, NUM_SUBCOMPACTIONS_SCHEDULED,
-                      compact_->sub_compact_states.size());
-  } else {
-    compact_->sub_compact_states.emplace_back(c, std::nullopt, std::nullopt,
-                                              /*sub_job_id*/ 0);
-  }
+    if (boundaries_.size() > 1) {
+      for (size_t i = 0; i <= boundaries_.size(); i++) {
+        compact_->sub_compact_states.emplace_back(
+            c, (i != 0) ? std::optional<Slice>(boundaries_[i - 1]) : std::nullopt,
+            (i != boundaries_.size()) ? std::optional<Slice>(boundaries_[i])
+                                      : std::nullopt,
+            static_cast<uint32_t>(i));
+        // assert to validate that boundaries don't have same user keys (without
+        // timestamp part).
+        assert(i == 0 || i == boundaries_.size() ||
+              cfd->user_comparator()->CompareWithoutTimestamp(
+                  boundaries_[i - 1], true, boundaries_[i], true) < 0);
+      }
+      RecordInHistogram(stats_, NUM_SUBCOMPACTIONS_SCHEDULED,
+                        compact_->sub_compact_states.size());
+    } else {
+      compact_->sub_compact_states.emplace_back(c, std::nullopt, std::nullopt,
+                                                /*sub_job_id*/ 0);
+    }
 
-  if (c->immutable_options()->preclude_last_level_data_seconds > 0) {
-    // TODO(zjay): move to a function
-    seqno_time_mapping_.SetMaxTimeDuration(
-        c->immutable_options()->preclude_last_level_data_seconds);
-    // setup seqno_time_mapping_
-    for (const auto& each_level : *c->inputs()) {
-      for (const auto& fmd : each_level.files) {
-        std::shared_ptr<const TableProperties> tp;
-        Status s = cfd->current()->GetTableProperties(&tp, fmd, nullptr);
-        if (s.ok()) {
-          seqno_time_mapping_.Add(tp->seqno_to_time_mapping)
-              .PermitUncheckedError();
-          seqno_time_mapping_.Add(fmd->fd.smallest_seqno,
-                                  fmd->oldest_ancester_time);
+    if (c->immutable_options()->preclude_last_level_data_seconds > 0) {
+      // TODO(zjay): move to a function
+      seqno_time_mapping_.SetMaxTimeDuration(
+          c->immutable_options()->preclude_last_level_data_seconds);
+      // setup seqno_time_mapping_
+      for (const auto& each_level : *c->inputs()) {
+        for (const auto& fmd : each_level.files) {
+          std::shared_ptr<const TableProperties> tp;
+          Status s = cfd->current()->GetTableProperties(&tp, fmd, nullptr);
+          if (s.ok()) {
+            seqno_time_mapping_.Add(tp->seqno_to_time_mapping)
+                .PermitUncheckedError();
+            seqno_time_mapping_.Add(fmd->fd.smallest_seqno,
+                                    fmd->oldest_ancester_time);
+          }
         }
       }
-    }
 
-    auto status = seqno_time_mapping_.Sort();
-    if (!status.ok()) {
-      ROCKS_LOG_WARN(db_options_.info_log,
-                     "Invalid sequence number to time mapping: Status: %s",
-                     status.ToString().c_str());
-    }
-    int64_t _current_time = 0;
-    status = db_options_.clock->GetCurrentTime(&_current_time);
-    if (!status.ok()) {
-      ROCKS_LOG_WARN(db_options_.info_log,
-                     "Failed to get current time in compaction: Status: %s",
-                     status.ToString().c_str());
-      penultimate_level_cutoff_seqno_ = 0;
-    } else {
-      penultimate_level_cutoff_seqno_ =
-          seqno_time_mapping_.TruncateOldEntries(_current_time);
+      auto status = seqno_time_mapping_.Sort();
+      if (!status.ok()) {
+        ROCKS_LOG_WARN(db_options_.info_log,
+                      "Invalid sequence number to time mapping: Status: %s",
+                      status.ToString().c_str());
+      }
+      int64_t _current_time = 0;
+      status = db_options_.clock->GetCurrentTime(&_current_time);
+      if (!status.ok()) {
+        ROCKS_LOG_WARN(db_options_.info_log,
+                      "Failed to get current time in compaction: Status: %s",
+                      status.ToString().c_str());
+        penultimate_level_cutoff_seqno_ = 0;
+      } else {
+        penultimate_level_cutoff_seqno_ =
+            seqno_time_mapping_.TruncateOldEntries(_current_time);
+      }
     }
   }
-}
 
 uint64_t CompactionJob::GetSubcompactionsLimit() {
   return extra_num_subcompaction_threads_reserved_ +
@@ -592,6 +592,10 @@ Status CompactionJob::Run() {
   assert(num_threads > 0);
   const uint64_t start_micros = db_options_.clock->NowMicros();
 
+
+  /*
+  这里多线程的操作比较妙，为了更有效的使用资源，将index=0的sub_compaction交给当前线程执行，将其余的compaction交给其他线程执行
+  */
   // Launch a thread for each of subcompactions 1...num_threads-1
   std::vector<port::Thread> thread_pool;
   thread_pool.reserve(num_threads - 1);
@@ -671,7 +675,12 @@ Status CompactionJob::Run() {
   if (status.ok()) {
     //i get it 
     thread_pool.clear();
-    std::vector<const CompactionOutputs::Output*> files_output; //有一个很amazing的problem是这些output_file在cfd的version中都找不到
+
+    //在这里统计所有sub_compaction的output信息
+    
+    //有一个很amazing的problem是这些output_file在cfd的version中都找不到。
+    //update：知道了，原因是version是在之后的CompactionJob::Install中update的
+    std::vector<const CompactionOutputs::Output*> files_output;
     for (const auto& state : compact_->sub_compact_states) {
       for (const auto& output : state.GetOutputs()) {
         files_output.emplace_back(&output);
@@ -1103,6 +1112,8 @@ void CompactionJob::ProcessKeyValueCompaction(SubcompactionState* sub_compact) {
     }
   }
 
+
+  //
   // Although the v2 aggregator is what the level iterator(s) know about,
   // the AddTombstones calls will be propagated down to the v1 aggregator.
   std::unique_ptr<InternalIterator> raw_input(versions_->MakeInputIterator(
@@ -1267,6 +1278,7 @@ void CompactionJob::ProcessKeyValueCompaction(SubcompactionState* sub_compact) {
       RecordCompactionIOStats();
     }
 
+    // 在这里openWritableFile
     // Add current compaction_iterator key to target compaction output, if the
     // output file needs to be close or open, it will call the `open_file_func`
     // and `close_file_func`.
@@ -1489,6 +1501,7 @@ Status CompactionJob::FinishCompactionOutputFile(
 
   const uint64_t current_entries = outputs.NumEntries();
 
+  outputs.fs_ = fs_;
   s = outputs.Finish(s, seqno_time_mapping_);
 
   if (s.ok()) {
@@ -1760,9 +1773,12 @@ Status CompactionJob::OpenCompactionOutputFile(SubcompactionState* sub_compact,
     temperature =
         sub_compact->compaction->mutable_cf_options()->last_level_temperature;
   }
+  fo_copy.lifetime = 1000;
   fo_copy.temperature = temperature;
 
   Status s;
+  
+  //writable_file是得到的result
   IOStatus io_s = NewWritableFile(fs_.get(), fname, &writable_file, fo_copy);
   s = io_s;
   if (sub_compact->io_status.ok()) {
@@ -1815,6 +1831,8 @@ Status CompactionJob::OpenCompactionOutputFile(SubcompactionState* sub_compact,
   // Initialize a SubcompactionState::Output and add it to sub_compact->outputs
   {
     FileMetaData meta;
+    meta.fname = fname;
+    meta.fnumber = file_number;
     meta.fd = FileDescriptor(file_number,
                              sub_compact->compaction->output_path_id(), 0);
     meta.oldest_ancester_time = oldest_ancester_time;

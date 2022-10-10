@@ -44,6 +44,11 @@ class CompositeEnv : public Env {
 
   Status NewWritableFile(const std::string& f, std::unique_ptr<WritableFile>* r,
                          const EnvOptions& options) override;
+  
+  Status SetFileLifetime(std::string& fname, 
+                                   uint64_t lifetime) {
+      return file_system_->SetFileLifetime(fname, lifetime);
+  }
 
   Status ReopenWritableFile(const std::string& fname,
                             std::unique_ptr<WritableFile>* result,

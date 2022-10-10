@@ -4,11 +4,12 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-// #include "env/env_zenfs.cc"
+#include "env/env_zenfs.cc"
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/slice.h"
-
+#include "rocksdb/plugin/zenfs/fs/fs_zenfs.h"
+#include "rocksdb/env.h"
 using namespace std;
 using namespace rocksdb;
 
@@ -29,7 +30,7 @@ int main() {
   DB* db;
   Options options;
   options.create_if_missing = true;
-  // options.env = new ZenFSEnv("nullb0");
+  options.env = new ZenFSEnv("nullb0");
 
   const int B = 1;
   const int KB = 1024;

@@ -122,6 +122,7 @@ void print_compaction(Compaction *compaction, int level);
 void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
 void all_profiling_print();
 void profiling_print();
+void get_predict(int level, const FileMetaData &file, Version *v, int &predict_, int &predict_type_, int &tmp_rank);
 const std::string kDefaultColumnFamilyName("default");
 const std::string kPersistentStatsColumnFamilyName(
     "___rocksdb_stats_history___");
@@ -6068,9 +6069,8 @@ int get_rank(int level, const FileMetaData &file, Version *v) {
   //   result = vstorage->NumLevelFiles(level) - first_large + file_pos; //否则要转一圈才能compact
 
   // printf("get_rank first_large=%d file_pos=%d files[level].size()=%d result=%d\n", first_large, file_pos, vstorage->NumLevelFiles(level), result);
-
-  int result = INF;
   auto vstorage = v->storage_info();
+  int result = vstorage->FilesByCompactionPri(level).size() / 2;
   //std::cout << "files.unique_id[1]=" << file.unique_id[1] << '\n';
   for(long unsigned int i = 0 ; i < vstorage->FilesByCompactionPri(level).size(); i++) {
     int index = vstorage->FilesByCompactionPri(level)[i];
@@ -6187,23 +6187,23 @@ void get_predict(int level, const FileMetaData &file, Version *v, int &predict_,
 
   //T3 实际上growing状态下T3并不好使
   //被level=4某个不存在SST file compact掉，我们假设此SST file存在
-  if(predict_ == INF && level != 0) { //目前我们认为只有当没有overlap的时候才会触发此算法
-    int upper_level = level - 1;
-    int rank2 = get_rank2(upper_level, file, v);
-    int offset2 = get_offset(upper_level);
-    tmp_rank = rank2;
-    int T3 = 100;
-    if(rank2 <= offset2) 
-        T3 = rank2;
-    else { 
-        rank2 -= offset2;
-        T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
-    }
-    if(T3 < predict_) {
-      predict_ = 150;
-      predict_type_ = 1;
-    }
- }
+//   if(predict_ == INF && level != 0) { //目前我们认为只有当没有overlap的时候才会触发此算法
+//     int upper_level = level - 1;
+//     int rank2 = get_rank2(upper_level, file, v);
+//     int offset2 = get_offset(upper_level);
+//     tmp_rank = rank2;
+//     int T3 = 100;
+//     if(rank2 <= offset2) 
+//         T3 = rank2;
+//     else { 
+//         rank2 -= offset2;
+//         T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
+//     }
+//     if(T3 < predict_) {
+//       predict_ = 150;
+//       predict_type_ = 1;
+//     }
+//  }
 
   //T1
   //level=5自己触发compaction将自己compact掉

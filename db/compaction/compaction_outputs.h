@@ -28,6 +28,9 @@ using CompactionFileCloseFunc =
 // compaction_job Open/Close compaction file functions.
 class CompactionOutputs {
  public:
+
+  FileSystemPtr fs_;//自己加的
+
   // compaction output file
   struct Output {
     Output(FileMetaData&& _meta, const InternalKeyComparator& _icmp,
@@ -42,7 +45,6 @@ class CompactionOutputs {
     bool finished;
     std::shared_ptr<const TableProperties> table_properties;
   };
-
   CompactionOutputs() = delete;
 
   explicit CompactionOutputs(const Compaction* compaction,
@@ -189,6 +191,9 @@ class CompactionOutputs {
   // if the outputs have range delete, range delete is also data
   bool HasRangeDel() const {
     return range_del_agg_ && !range_del_agg_->IsEmpty();
+  }
+  const Compaction* GetCompaction() const {
+    return compaction_;
   }
 
  private:

@@ -183,7 +183,7 @@ void LevelCompactionBuilder::PickFileToCompact(
 void LevelCompactionBuilder::SetupInitialFiles() {
   // Find the compactions by size on all levels.
   bool skipped_l0_to_base = false;
-  for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) { //枚举所有level
+  for (int i = 0; i < compaction_picker_->NumberLevels() - 1; i++) { //这里枚举的是所有参与compaction的level，也就是i=0是start_level
     start_level_score_ = vstorage_->CompactionScore(i);
     start_level_ = vstorage_->CompactionScoreLevel(i);
     assert(i == 0 || start_level_score_ <= vstorage_->CompactionScore(i - 1));
