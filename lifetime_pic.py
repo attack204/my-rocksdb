@@ -63,9 +63,12 @@ for i in range(0, len(x_list)):
 
 
 print("ALL", correct / tot)
-print("T1 Accuracy", kind_correct["0"] / kind_num["0"], "AveLifetime", kind_ave["0"] / kind_num["0"])
-print("T2 Accuracy", kind_correct["-1"] / kind_num["-1"],  "AveLifetime", kind_ave["-1"] / kind_num["-1"])
-print("T3 Accuracy", kind_correct["1"] / kind_num["1"],  "AveLifetime", kind_ave["1"] / kind_num["1"])
+if (kind_num["0"] != 0):
+	print("T1 Accuracy", kind_correct["0"] / kind_num["0"], "AveLifetime", kind_ave["0"] / kind_num["0"])
+if (kind_num["-1"] != 0):
+	print("T2 Accuracy", kind_correct["-1"] / kind_num["-1"],  "AveLifetime", kind_ave["-1"] / kind_num["-1"])
+if (kind_num["1"] != 0):
+	print("T3 Accuracy", kind_correct["1"] / kind_num["1"],  "AveLifetime", kind_ave["1"] / kind_num["1"])
 print(sum / tot)
 plt.hist(data0_list, bins=20)
 plt.show()

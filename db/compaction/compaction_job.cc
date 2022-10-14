@@ -253,6 +253,7 @@ void CompactionJob::ReportStartedCompaction(Compaction* compaction) {
       StopWatch sw(db_options_.clock, stats_, SUBCOMPACTION_SETUP_TIME);
       GenSubcompactionBoundaries();
     }
+    printf("boundaries.size() %ld\n", boundaries_.size());
     if (boundaries_.size() > 1) {
       for (size_t i = 0; i <= boundaries_.size(); i++) {
         compact_->sub_compact_states.emplace_back(
@@ -1098,6 +1099,7 @@ void CompactionJob::ProcessKeyValueCompaction(SubcompactionState* sub_compact) {
   // GenSubcompactionBoundaries doesn't strip away the timestamp.
   size_t ts_sz = cfd->user_comparator()->timestamp_size();
   if (start.has_value()) {
+    printf("start has value");
     read_options.iterate_lower_bound = &start.value();
     if (ts_sz > 0) {
       start_without_ts = StripTimestampFromUserKey(start.value(), ts_sz);
@@ -1105,6 +1107,7 @@ void CompactionJob::ProcessKeyValueCompaction(SubcompactionState* sub_compact) {
     }
   }
   if (end.has_value()) {
+    printf("end has value");
     read_options.iterate_upper_bound = &end.value();
     if (ts_sz > 0) {
       end_without_ts = StripTimestampFromUserKey(end.value(), ts_sz);

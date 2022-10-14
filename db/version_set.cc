@@ -3756,6 +3756,44 @@ void SortFileByRoundRobin(const InternalKeyComparator& icmp,
 }
 }  // namespace
 
+void VersionStorageInfo::SortFileRR() {
+  printf("SorFileRR Begin");
+  for (int level = 0; level < num_levels() - 1; level++) {
+    const std::vector<FileMetaData*>& files = files_[level];
+    auto& files_by_compaction_pri = files_by_compaction_pri_[level];
+    assert(files_by_compaction_pri.size() == 0);
+
+    // populate a temp vector for sorting based on size
+    std::vector<Fsize> temp(files.size());
+    for (size_t i = 0; i < files.size(); i++) {
+      temp[i].index = i;
+      temp[i].file = files[i];
+    }
+
+    // sort the top number_of_files_to_sort_ based on file size
+    // size_t num = VersionStorageInfo::kNumberFilesToSort;
+    //if (num > temp.size()) {
+    //uint64_t num = temp.size();
+    //}
+
+
+    SortFileByRoundRobin(*internal_comparator_, &compact_cursor_,
+                          level0_non_overlapping_, level, &temp);
+
+  
+
+    // initialize files_by_compaction_pri_
+    for (size_t i = 0; i < temp.size(); i++) {
+      files_by_compaction_pri.push_back(static_cast<int>(temp[i].index));
+    }
+    next_file_to_compact_by_size_[level] = 0;
+    assert(files_[level].size() == files_by_compaction_pri_[level].size());
+  }
+  printf("SorFileRR End");
+
+}
+
+
 void VersionStorageInfo::UpdateFilesByCompactionPri(
     const ImmutableOptions& ioptions, const MutableCFOptions& options) {
   if (compaction_style_ == kCompactionStyleNone ||

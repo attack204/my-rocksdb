@@ -128,9 +128,11 @@ class VersionStorageInfo {
                      VersionStorageInfo* src_vstorage,
                      bool _force_consistency_checks);
   // No copying allowed
-  VersionStorageInfo(const VersionStorageInfo&) = delete;
-  void operator=(const VersionStorageInfo&) = delete;
+ // VersionStorageInfo(const VersionStorageInfo&) = delete;
+//  void operator=(const VersionStorageInfo&) = delete;
   ~VersionStorageInfo();
+
+  void SortFileRR();
 
   void Reserve(int level, size_t size) { files_[level].reserve(size); }
 
@@ -586,8 +588,7 @@ class VersionStorageInfo {
                                   const MutableCFOptions& mutable_cf_options);
 
  
- 
- private:
+ public:
   void ComputeCompensatedSizes();
   void UpdateNumNonEmptyLevels();
   void CalculateBaseBytes(const ImmutableOptions& ioptions,
@@ -948,6 +949,9 @@ class Version {
 
   int TEST_refs() const { return refs_; }
 
+  VersionStorageInfo storage_info_instance() {
+    return storage_info_;
+  }
   VersionStorageInfo* storage_info() { return &storage_info_; }
   const VersionStorageInfo* storage_info() const { return &storage_info_; }
 

@@ -1,6 +1,7 @@
 make_config.mk
 rocksdb.pc
 
+out.txt
 
 
 *.a
