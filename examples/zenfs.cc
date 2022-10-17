@@ -4,14 +4,22 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-#include "env/env_hybrid.cc"
+#include "env/env_hybrid.h"
 #include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/plugin/zenfs/fs/fs_zenfs.h"
 #include "rocksdb/env.h"
+#include "rocksdb/options.h"
+#include "rocksdb/plugin/zenfs/fs/fs_zenfs.h"
+
 using namespace std;
-using namespace rocksdb;
+
+using ROCKSDB_NAMESPACE::DB;
+using ROCKSDB_NAMESPACE::DestroyDB;
+using ROCKSDB_NAMESPACE::HybridFSEnv;
+using ROCKSDB_NAMESPACE::Options;
+using ROCKSDB_NAMESPACE::ReadOptions;
+using ROCKSDB_NAMESPACE::Status;
+using ROCKSDB_NAMESPACE::WriteOptions;
+using ROCKSDB_NAMESPACE::Slice;
 
 const std::string PATH = "/tmp/test_rocksdb";
 
@@ -56,8 +64,8 @@ int main() {
   options.level0_slowdown_writes_trigger=8;
   options.level0_file_num_compaction_trigger=4;
   options.max_write_buffer_number=1;
-  options.compaction_style=kCompactionStyleLevel;
-  options.compaction_pri=kRoundRobin;
+  options.compaction_style=rocksdb::kCompactionStyleLevel;
+  options.compaction_pri=rocksdb::kRoundRobin;
   options.max_open_files=1000;
   options.target_file_size_multiplier=1;
 

@@ -1679,7 +1679,7 @@ Status Version::GetPropertiesOfAllTables(TablePropertiesCollection* props,
 }
 
 Status Version::GetPropertiesOfTablesInRange(
-    const Range* range, std::size_t n, TablePropertiesCollection* props) const {
+    const Range* range, std::size_t n, TablePropertiesCollection* props)  {
   for (int level = 0; level < storage_info_.num_non_empty_levels(); level++) {
     for (decltype(n) i = 0; i < n; i++) {
       // Convert user_key into a corresponding internal key.
@@ -3997,12 +3997,12 @@ bool VersionStorageInfo::OverlapInLevel(int level,
 void VersionStorageInfo::GetOverlappingInputs(
     int level, const InternalKey* begin, const InternalKey* end,
     std::vector<FileMetaData*>* inputs, int hint_index, int* file_index,
-    bool expand_range, InternalKey** next_smallest) const {
+    bool expand_range, InternalKey** next_smallest) {
   if (level >= num_non_empty_levels_) {
     // this level is empty, no overlapping inputs
     return;
   }
-
+  SetInputsTmp(inputs);
   inputs->clear();
   if (file_index) {
     *file_index = -1;

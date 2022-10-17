@@ -132,7 +132,13 @@ class VersionStorageInfo {
 //  void operator=(const VersionStorageInfo&) = delete;
   ~VersionStorageInfo();
 
+  std::vector<FileMetaData*>* inputs_tmp;
+
   void SortFileRR();
+
+  void SetInputsTmp(std::vector<FileMetaData*>* inputs_) {
+    inputs_tmp = inputs_;
+  }
 
   void Reserve(int level, size_t size) { files_[level].reserve(size); }
 
@@ -260,7 +266,7 @@ class VersionStorageInfo {
                                   // range and overlap each other. If false,
                                   // then just files intersecting the range
       InternalKey** next_smallest = nullptr)  // if non-null, returns the
-      const;  // smallest key of next file not included
+      ;  // smallest key of next file not included
   void GetCleanInputsWithinInterval(
       int level, const InternalKey* begin,  // nullptr means before all keys
       const InternalKey* end,               // nullptr means after all keys
@@ -923,7 +929,7 @@ class Version {
   Status GetPropertiesOfAllTables(TablePropertiesCollection* props);
   Status GetPropertiesOfAllTables(TablePropertiesCollection* props, int level);
   Status GetPropertiesOfTablesInRange(const Range* range, std::size_t n,
-                                      TablePropertiesCollection* props) const;
+                                      TablePropertiesCollection* props) ;
 
   // Print summary of range delete tombstones in SST files into out_str,
   // with maximum max_entries_to_print entries printed out.

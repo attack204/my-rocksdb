@@ -15,7 +15,7 @@
 
 namespace ROCKSDB_NAMESPACE {
 
-extern void get_predict(int level, const FileMetaData &file, Version *v, int &predict_, int &predict_type_, int &tmp_rank);
+extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
 extern int get_clock();
 void CompactionOutputs::NewBuilder(const TableBuilderOptions& tboptions) {
   builder_.reset(NewTableBuilder(tboptions, file_writer_.get()));
@@ -29,7 +29,7 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   int rank;
   const int output_level = GetCompaction()->output_level();
 
-  get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), predict, predict_type, rank);
+  get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), GetCompaction(), predict, predict_type, rank);
 
   fs_->SetFileLifetime(meta->fname, predict + get_clock());
 
