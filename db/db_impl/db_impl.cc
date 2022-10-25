@@ -6422,6 +6422,45 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
   
 
 }
+DBImpl *rocksdb_impl;
+void SetDBImpl(DBImpl *db) {
+  printf("SetDBImpl called");
+  rocksdb_impl = db;
+}
 
+bool DoPreCompaction(std::vector<uint64_t> file_list) {
+  printf("Recieve Compaction Request");
+  ColumnFamilyMetaData meta;
+  rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
+  std::vector<std::string> input_file_names;
+  int output_level = -1, count = 0;
+  //TODO: optimize
+  printf("file_list.size()=%ld\n", file_list.size());
+  for(auto &id: file_list) {
+    for(auto &x: meta.levels) {
+      int level = x.level;
+      for(auto &file: x.files) {
+        if(id == file.file_number) {
+          count++;
+          input_file_names.emplace_back(file.name);
+          if(output_level == -1) {
+            output_level = level + 1;
+          } else {
+            printf("output_level error previous output_level=%d now_level=%d\n", output_level, level + 1);
+            return false;
+          }
+        }
+      }
+    }
+  }
+ 
+  if(count != file_list.size()) {
+     printf("count error count=%d\n", count);
+    return false;
+  }
+  CompactionOptions options;
+  Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);
+  return true;
+}
 
 }  // namespace ROCKSDB_NAMESPACE

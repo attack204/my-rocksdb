@@ -828,7 +828,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
   auto vstorage = cfd->current()->storage_info();
 
 
-  vstorage->UpdateFilesByCompactionPri(*cfd->ioptions(), mutable_cf_options);
+  //vstorage->UpdateFilesByCompactionPri(*cfd->ioptions(), mutable_cf_options);
   after_flush_or_compaction(vstorage, compact_->compaction->level(0), tmp_files_output, cfd);
 
   const auto& stats = compaction_stats_.stats;
