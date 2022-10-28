@@ -55,7 +55,7 @@ enum LOG_TYPE {
 };
 
 extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
-extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
+extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
 
 
 const char* GetFlushReasonString (FlushReason flush_reason) {
@@ -340,7 +340,7 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
   stream.EndArray();
 
 
-  after_flush_or_compaction(cfd_->current()->storage_info(), 0, std::vector<const CompactionOutputs::Output*>{}, nullptr);
+  after_flush_or_compaction(cfd_->current()->storage_info(), 0, std::vector<const CompactionOutputs::Output*>{}, nullptr, nullptr);
 
 
   const auto& blob_files = vstorage->GetBlobFiles();

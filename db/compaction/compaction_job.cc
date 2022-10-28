@@ -67,7 +67,7 @@ enum LOG_TYPE {
 };
 
 extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
-extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
+extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
 
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
   switch (compaction_reason) {
@@ -829,7 +829,7 @@ Status CompactionJob::Install(const MutableCFOptions& mutable_cf_options) {
 
 
   //vstorage->UpdateFilesByCompactionPri(*cfd->ioptions(), mutable_cf_options);
-  after_flush_or_compaction(vstorage, compact_->compaction->level(0), tmp_files_output, cfd);
+  after_flush_or_compaction(vstorage, compact_->compaction->level(0), tmp_files_output, cfd, compact_->compaction);
 
   const auto& stats = compaction_stats_.stats;
 

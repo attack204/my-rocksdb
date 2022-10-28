@@ -180,8 +180,8 @@ class DBImpl : public DB {
          const bool seq_per_batch = false, const bool batch_per_txn = true,
          bool read_only = false);
   // No copying allowed
-  // DBImpl(const DBImpl&) = delete;
-  // void operator=(const DBImpl&) = delete;
+  DBImpl(const DBImpl&) = delete;
+  void operator=(const DBImpl&) = delete;
 
   virtual ~DBImpl();
 

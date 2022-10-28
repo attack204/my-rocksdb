@@ -119,7 +119,7 @@ enum LOG_TYPE {
 };
 void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
 void print_compaction(Compaction *compaction, int level);
-void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd);
+void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
 void all_profiling_print();
 void profiling_print();
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
@@ -6012,7 +6012,10 @@ uint64_t get_number(const FileMetaData tmp) {
   //   unique_id_str = EncodeUniqueIdBytes(&unique_id);
   // }
   // std::cout << "original unique_id = " << unique_id_str << "hashed id = " << base << '\n';
-  return tmp.unique_id[1];
+  //return tmp.unique_id[1];
+  //assert(tmp.fd.GetNumber() == tmp.fnumber);
+ // printf("tmp.fd.GetNumber()=%ld tmp.fnumber=%ld\n", tmp.fd.GetNumber(), tmp.fnumber);
+  return tmp.fd.GetNumber();
 }
 
 void print_compaction(Compaction *compaction, int level) {
@@ -6174,7 +6177,7 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
     }
     
   }
-  temp.push_back({num, &file_tmp});
+  temp.push_back({static_cast<size_t>(num), &file_tmp});
   printf("Before SortFileByRoundRobin\n");
 
   if(temp.size() != 1) {
@@ -6366,15 +6369,8 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
   predict_type[number] = predict_type_;
 }
 
-
-
-
-
-
-
-
 //flush/compact的最后后调用此函数, 此函数可以调用最新的Version信息
-void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd) {
+void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction) {
 
   puts("AllFiles");
   //这里打log要打所有file的log
@@ -6396,6 +6392,19 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       puts("");
     }
   }
+
+  puts("Input Files");
+  if(compaction != nullptr) {
+    for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
+        printf("files_L=%d ", compaction->level(i));
+        for (auto f : *compaction->inputs(i)) { 
+            printf("input_id=%ld ", f->fd.GetNumber());
+        }
+        puts("");
+    }
+  }
+  puts("Output Files");
+
   if(!files_output.empty()) {  
     for(auto &x: files_output) {
       const FileMetaData y = x->meta; 
@@ -6411,7 +6420,7 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       }
 
 
-      printf("new_sst_file_number=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
+      printf("new_id=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
       std::cout << "["<< y.smallest.user_key().ToString()
                 << "," << y.largest.user_key().ToString()
                 << "]" << '\n';
@@ -6425,37 +6434,48 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
 DBImpl *rocksdb_impl;
 void SetDBImpl(DBImpl *db) {
   printf("SetDBImpl called");
-  rocksdb_impl = db;
+  if(rocksdb_impl == nullptr) 
+    rocksdb_impl = db;
 }
 
 bool DoPreCompaction(std::vector<uint64_t> file_list) {
-  printf("Recieve Compaction Request");
+  printf("Recieve Compaction Request Time=%d\n", get_clock());
+  printf("file_list.size()=%ld\n", file_list.size());
+  printf("GetName=%s\n", rocksdb_impl->GetName().c_str());
   ColumnFamilyMetaData meta;
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
   std::vector<std::string> input_file_names;
   int output_level = -1, count = 0;
   //TODO: optimize
-  printf("file_list.size()=%ld\n", file_list.size());
+
+  printf("FileList: ");
+  for(auto &x: file_list) printf("%ld ", x);
+  puts("");
   for(auto &id: file_list) {
+    printf("DoPreCompaction::id=%ld time=%d\n", id, get_clock());
     for(auto &x: meta.levels) {
       int level = x.level;
+      printf("level=%d: ", level);
       for(auto &file: x.files) {
+        printf("%ld ", file.file_number);
         if(id == file.file_number) {
           count++;
+          printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
           input_file_names.emplace_back(file.name);
-          if(output_level == -1) {
-            output_level = level + 1;
-          } else {
-            printf("output_level error previous output_level=%d now_level=%d\n", output_level, level + 1);
-            return false;
-          }
+          // if(output_level == -1) {
+          //   output_level = level + 1;
+          // } else {
+          //   printf("output_level error previous output_level=%d now_level=%d\n", output_level, level + 1);
+          //   return false;
+          // }
         }
       }
+      puts("");
     }
   }
  
-  if(count != file_list.size()) {
-     printf("count error count=%d\n", count);
+  if(count != static_cast<int>(file_list.size())) {
+     printf("count error count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     return false;
   }
   CompactionOptions options;
