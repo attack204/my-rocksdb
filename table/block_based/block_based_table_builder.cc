@@ -922,6 +922,7 @@ void BlockBasedTableBuilder::Add(const Slice& key, const Slice& value) {
 #endif  // !NDEBUG
 
     auto should_flush = r->flush_block_policy->Update(key, value);
+    //auto should_flush = 0;
     if (should_flush) {
       assert(!r->data_block.empty());
       r->first_key_in_next_block = &key;

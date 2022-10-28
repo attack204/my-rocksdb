@@ -6197,9 +6197,9 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
       break;
     }
   }
-  std::cout << "files.unique_id[1]=" << file.unique_id[1]
-            << " result=" << result 
-            << " temp_size=" << temp.size() << '\n';
+  // std::cout << "files.unique_id[1]=" << file.unique_id[1]
+  //           << " result=" << result 
+  //           << " temp_size=" << temp.size() << '\n';
   return result;
 }
 
@@ -6484,7 +6484,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
   }
  
   if(count != static_cast<int>(file_list.size())) {
-     printf("count error count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
+     printf("ERROR:count not equal count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     return false;
   }
   printf("Ready To PreCompaction output_level=%d\n", output_level);
