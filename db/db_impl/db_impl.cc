@@ -108,6 +108,7 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "utilities/trace/replayer_impl.h"
+#include "utilities/my_logger.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -6433,15 +6434,19 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
 }
 DBImpl *rocksdb_impl;
 void SetDBImpl(DBImpl *db) {
-  printf("SetDBImpl called");
-  if(rocksdb_impl == nullptr) 
+  printf("SetDBImpl called\n");
+  //if(rocksdb_impl == nullptr) 
     rocksdb_impl = db;
 }
 
 bool DoPreCompaction(std::vector<uint64_t> file_list) {
   printf("Recieve Compaction Request Time=%d\n", get_clock());
   printf("file_list.size()=%ld\n", file_list.size());
+
+  assert(rocksdb_impl != nullptr);
+ 
   printf("GetName=%s\n", rocksdb_impl->GetName().c_str());
+  if(file_list.size() == 0) return true;
   ColumnFamilyMetaData meta;
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
   std::vector<std::string> input_file_names;
@@ -6451,26 +6456,30 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
   printf("FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
+
+
+  puts("Rocksdb File:");
+  for(auto &x: meta.levels) {
+    int level = x.level;
+    printf("level=%d: ", level);
+    for(auto &file: x.files) {
+      printf("%ld ", file.file_number);
+    }
+    puts("");
+  }  
+
+
   for(auto &id: file_list) {
-    printf("DoPreCompaction::id=%ld time=%d\n", id, get_clock());
     for(auto &x: meta.levels) {
       int level = x.level;
-      printf("level=%d: ", level);
       for(auto &file: x.files) {
-        printf("%ld ", file.file_number);
         if(id == file.file_number) {
           count++;
-          printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
+          //printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
           input_file_names.emplace_back(file.name);
-          // if(output_level == -1) {
-          //   output_level = level + 1;
-          // } else {
-          //   printf("output_level error previous output_level=%d now_level=%d\n", output_level, level + 1);
-          //   return false;
-          // }
+          output_level = std::max(output_level, level + 1);
         }
       }
-      puts("");
     }
   }
  
@@ -6478,8 +6487,22 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
      printf("count error count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     return false;
   }
+  printf("Ready To PreCompaction output_level=%d\n", output_level);
+  
   CompactionOptions options;
   Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);
+
+  puts("After PreCompaction");
+  ColumnFamilyMetaData new_meta;
+  rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &new_meta);
+  for(auto &x: new_meta.levels) {
+    int level = x.level;
+    printf("level=%d: ", level);
+    for(auto &file: x.files) {
+      printf("%ld ", file.file_number);
+    }
+    puts("");
+  }  
   return true;
 }
 

@@ -1419,6 +1419,8 @@ Status DBImpl::CompactFilesImpl(
       &blob_callback_, &bg_compaction_scheduled_,
       &bg_bottom_compaction_scheduled_);
 
+  printf("PreCompaction Job Ready\n");
+
   // Creating a compaction influences the compaction score because the score
   // takes running compactions into account (by skipping files that are already
   // being compacted). Since we just changed compaction score, we recalculate it
@@ -1437,7 +1439,14 @@ Status DBImpl::CompactFilesImpl(
   TEST_SYNC_POINT("CompactFilesImpl:3");
   mutex_.Lock();
 
+
+  
+
   Status status = compaction_job.Install(*c->mutable_cf_options());
+
+
+
+
   if (status.ok()) {
     assert(compaction_job.io_status().ok());
     InstallSuperVersionAndScheduleWork(c->column_family_data(),

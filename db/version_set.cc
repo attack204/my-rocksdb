@@ -1759,11 +1759,11 @@ void Version::GetColumnFamilyMetaData(ColumnFamilyMetaData* cf_meta) {
 
   auto* ioptions = cfd_->ioptions();
   auto* vstorage = storage_info();
-  printf("Version::GetColumnFamilyMetaData: NumberLevels()=%d\n", cfd_->NumberLevels());
+  //printf("Version::GetColumnFamilyMetaData: NumberLevels()=%d\n", cfd_->NumberLevels());
   for (int level = 0; level < cfd_->NumberLevels(); level++) {
     uint64_t level_size = 0;
     cf_meta->file_count += vstorage->LevelFiles(level).size();
-    printf("Version::GetColumnFamilyMetaData: Level=%d LevelFiles=%ld\n", level, vstorage->LevelFiles(level).size());
+    //printf("Version::GetColumnFamilyMetaData: Level=%d LevelFiles=%ld\n", level, vstorage->LevelFiles(level).size());
     std::vector<SstFileMetaData> files;
     for (const auto& file : vstorage->LevelFiles(level)) {
       uint32_t path_id = file->fd.GetPathId();
