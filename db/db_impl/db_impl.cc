@@ -6398,7 +6398,7 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
     for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
         printf("files_L=%d ", compaction->level(i));
         for (auto f : *compaction->inputs(i)) { 
-            printf("input_id=%ld ", f->fd.GetNumber());
+            printf("input_id=%ld fname=%s ", f->fd.GetNumber(), f->fname.c_str());
         }
         puts("");
     }
