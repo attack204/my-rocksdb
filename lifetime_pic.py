@@ -44,7 +44,7 @@ for line in open("lifetime.out"):
 tot = 0
 correct = 0
 for i in range(0, len(x_list)):
-    if x_list[i] == 5:
+    if x_list[i] == 5 or x_list[i] >= 0:
         key=str(type_list[i])
         sum = sum + lifetime_list[i]
         kind_ave[key] += lifetime_list[i]

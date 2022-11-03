@@ -5867,16 +5867,18 @@ void DBImpl::RecordSeqnoToTimeMapping() {
 }
 #endif  // ROCKSDB_LITE
 
+
+const int LEVEL = 101;
 int flush_num, compaction_num;
 const int FlushLevel = 2;
 const int CompactLevel = 6;
 const int INF = 1e9;
-int flush_level[8]; //每个level被Flush的次数
-int compact_level[8]; //每个level被compact的次数
-uint64_t compact_level_lifetime[8]; //被compact的SST file的总的lifetime
-uint32_t correct_predict_time[8]; //进行了预测的SST file中正确预测的文件数量
-uint32_t compacted_number[8]; //进行了预测的SST file中被合并的文件数量
-uint32_t level_file_num[8];
+int flush_level[LEVEL]; //每个level被Flush的次数
+int compact_level[LEVEL]; //每个level被compact的次数
+uint64_t compact_level_lifetime[LEVEL]; //被compact的SST file的总的lifetime
+uint32_t correct_predict_time[LEVEL]; //进行了预测的SST file中正确预测的文件数量
+uint32_t compacted_number[LEVEL]; //进行了预测的SST file中被合并的文件数量
+uint32_t level_file_num[LEVEL];
 const int PREDICT_THRESHOLD = 25;
 std::map<uint64_t, int> pre; //key: file_number value: file被创建的时间
 std::map<uint64_t, int> predict; //key: file_number value: 预测的lifetime的值
@@ -5902,9 +5904,9 @@ int min_int(int a, int b) {
 int max_int(int a, int b) {
   return a > b ? a : b;
 }
-int last_compact[8];
-int star_time[8];
-int level_round[8];
+int last_compact[LEVEL];
+int star_time[LEVEL];
+int level_round[LEVEL];
 
 
 //Stable Parameter
@@ -5912,7 +5914,7 @@ int level_round[8];
 // int CYCLE = 25;
 
 //Growing Parameter
-int level_len[8] = {2, 1, 6, 7, 15, 8};
+int level_len[LEVEL] = {2, 1, 6, 7, 15, 8};
 int CYCLE = 40;
 
 class life_meta {
