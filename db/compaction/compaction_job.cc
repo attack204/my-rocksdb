@@ -68,7 +68,7 @@ enum LOG_TYPE {
 
 extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
 extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
-
+extern void SetRocksIO(uint64_t rocks_io);
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
   switch (compaction_reason) {
     case CompactionReason::kUnknown:
@@ -1721,6 +1721,8 @@ Status CompactionJob::InstallCompactionResults(
 }
 
 void CompactionJob::RecordCompactionIOStats() {
+  //printf("IOSTATS=%ld STATS=%s\n", IOSTATS(bytes_written), stats_->ToString().c_str());
+  SetRocksIO(stats_->getTickerCount(COMPACT_WRITE_BYTES) + stats_->getTickerCount(FLUSH_WRITE_BYTES));
   RecordTick(stats_, COMPACT_READ_BYTES, IOSTATS(bytes_read));
   RecordTick(stats_, COMPACT_WRITE_BYTES, IOSTATS(bytes_written));
   CompactionReason compaction_reason =

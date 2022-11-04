@@ -6508,4 +6508,12 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
   return true;
 }
 
+uint64_t rocks_io;
+void SetRocksIO(uint64_t rocks_io_) {
+  rocks_io = rocks_io_;
+}
+
+uint64_t GetIOSTATS() {
+  return rocks_io;
+}
 }  // namespace ROCKSDB_NAMESPACE

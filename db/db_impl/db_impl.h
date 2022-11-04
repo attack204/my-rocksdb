@@ -68,6 +68,8 @@
 #include "util/repeatable_thread.h"
 #include "util/stop_watch.h"
 #include "util/thread_local.h"
+#include "monitoring/iostats_context_imp.h"
+#include "monitoring/thread_status_util.h"
 
 namespace ROCKSDB_NAMESPACE {
 
