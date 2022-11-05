@@ -6325,7 +6325,7 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
 
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
-  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
+//  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
 
   predict_ = INF;
   if(level == 0) {
@@ -6379,8 +6379,12 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
   uint64_t number = get_number(file);
+  printf("PredictSetFileLifetime number=%ld lifetime=%ld\n", number, predict_);
   predict[number] = predict_;
   predict_type[number] = predict_type_;
+  if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
+    pre[number] = get_clock();
+  }
 }
 
 //flush/compact的最后后调用此函数, 此函数可以调用最新的Version信息
@@ -6426,13 +6430,6 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       int rank;
       uint64_t number = get_number(y);
       pre[number] = get_clock();
-
-
-      if(level == 0) {
-        Version *v = cfd->current();
-        get_predict(level + 1, y, v, nullptr, predict[number], predict_type[number], rank);
-      }
-
 
       printf("new_id=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
       std::cout << "["<< y.smallest.user_key().ToString()
