@@ -43,6 +43,9 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
+extern int get_clock();
+
 class TableFactory;
 
 TableBuilder* NewTableBuilder(const TableBuilderOptions& tboptions,
@@ -150,7 +153,24 @@ Status BuildTable(
       //file_options.lifetime = 1000;
       FileOptions tmp_file_options = file_options;
       tmp_file_options.lifetime = 100;
+
+      //在这里写入
       IOStatus io_s = NewWritableFile(fs, fname, &file, tmp_file_options);
+
+
+      int predict;
+      int predict_type;
+      int rank;
+      const int output_level = 0;
+
+      get_predict(output_level, *meta, versions->GetColumnFamilySet()->GetDefault()->current(), nullptr, predict, predict_type, rank);
+
+      printf("meta->fname=%s get_clock=%d\n", meta->fname.c_str(), get_clock());
+      fs->SetFileLifetime(meta->fname, predict + get_clock());
+
+
+
+
       assert(s.ok());
       s = io_s;
       if (io_status->ok()) {

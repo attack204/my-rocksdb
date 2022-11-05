@@ -309,6 +309,7 @@ Status FlushJob::Run(LogsWithPrepTracker* prep_tracker, FileMetaData* file_meta,
   } else if (write_manifest_) {
     TEST_SYNC_POINT("FlushJob::InstallResults");
     // Replace immutable memtable with the generated Table
+    // Install
     s = cfd_->imm()->TryInstallMemtableFlushResults(
         cfd_, mutable_cf_options_, mems_, prep_tracker, versions_, db_mutex_,
         meta_.fd.GetNumber(), &job_context_->memtables_to_free, db_directory_,
@@ -962,6 +963,9 @@ Status FlushJob::WriteLevel0Table() {
           job_context_->job_id, io_priority, &table_properties_, write_hint,
           full_history_ts_low, blob_callback_, &num_input_entries,
           &memtable_payload_bytes, &memtable_garbage_bytes);
+
+
+
       // TODO: Cleanup io_status in BuildTable and table builders
       assert(!s.ok() || io_s.ok());
       io_s.PermitUncheckedError();

@@ -6041,7 +6041,8 @@ void print_compaction(Compaction *compaction, int level) {
         number_level[number] = level;
         add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number]);
       } else {
-        puts("GG"); //can't reach here
+        //puts("GG"); //can't reach here
+        printf("ERROR: can't find SST's lifetime");
       }
       putchar('\n');
     }
@@ -6146,6 +6147,9 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
   FileMetaData file_tmp = file;
   //需要把input中的file都忽略掉
   const std::vector<FileMetaData*>& files = vstorage_t->files_[level];
+  if(level == 0) {
+    return files.size();
+  }
   uint32_t n = files.size();
   std::vector<Fsize> temp;
   int num = 0;
@@ -6319,44 +6323,49 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
 
 
-//目前的策略是根据平均时间来进行预测
+
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
-  std::cout << "smallest key" << file.smallest.user_key().ToString() << "largest key" << file.largest.user_key().ToString() << '\n';
+  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
+
   predict_ = INF;
-  // T2 准的离谱
-  //level=5被level=1-4存在的compact
-  //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
-  if(level == 0) ;
-  else {
+  if(level == 0) {
+    predict_ = 1;
+    predict_type_ = 0;
+  } else {
+
+    // T2 准的离谱
+    //level=5被level=1-4存在的compact
+    //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
+
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); //注释掉这个可以屏蔽T2的predict
-  }
 
-  //T3 实际上growing状态下T3并不好使
-  //被level=4某个不存在SST file compact掉，我们假设此SST file存在
-  if(predict_ == INF && level != 0) { //目前我们认为只有当没有overlap的时候才会触发此算法
-    int upper_level = level - 1;
-    int rank2 = get_rank(upper_level, file, v, compaction_);
-    int offset2 = get_offset(upper_level);
-    tmp_rank = rank2;
-    int T3 = rank2;
-    if(rank2 <= offset2) 
-        T3 = rank2;
-    else { 
-        rank2 -= offset2;
-        T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
-    }
-    if(T3 < predict_) {
-      predict_ = 150;
-      predict_type_ = 1;
-    }
- }
 
-  //T1
-  //level=5自己触发compaction将自己compact掉
-  //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
+    //T3 实际上growing状态下T3并不好使
+    //被level=4某个不存在SST file compact掉，我们假设此SST file存在
+    if(predict_ == INF) { //目前我们认为只有当没有overlap的时候才会触发此算法
+      int upper_level = level - 1;
+      int rank2 = get_rank(upper_level, file, v, compaction_);
+      int offset2 = get_offset(upper_level);
+      tmp_rank = rank2;
+      int T3 = rank2;
+      if(rank2 <= offset2) 
+          T3 = rank2;
+      else { 
+          rank2 -= offset2;
+          T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
+      }
+      if(T3 < predict_) {
+        predict_ = 150;
+        predict_type_ = 1;
+      }
+    }
+
+    //T1
+    //level=5自己触发compaction将自己compact掉
+    //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
 
     int rank = get_rank(level, file, v, compaction_);
-    //tmp_rank = rank;
+
     int T1 = CYCLE * (rank / level_len[level]) + rank % level_len[level];
     int lower_level = level - 1;
     if(lower_level != -1) 
@@ -6365,7 +6374,9 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
       predict_ = T1;
       predict_type_ = 0;
     }
-  //}
+
+  }
+
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
   uint64_t number = get_number(file);
   predict[number] = predict_;

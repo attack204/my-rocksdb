@@ -1470,7 +1470,7 @@ Status CompactionJob::FinishCompactionOutputFile(
   FileMetaData* meta = outputs.GetMetaData();
   uint64_t output_number = meta->fd.GetNumber();
   assert(output_number != 0);
-
+  printf("FinishCompactionOutputFile fname=%s number=%ld\n", meta->fname, output_number);
   ColumnFamilyData* cfd = sub_compact->compaction->column_family_data();
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;
@@ -1752,6 +1752,7 @@ Status CompactionJob::OpenCompactionOutputFile(SubcompactionState* sub_compact,
   // no need to lock because VersionSet::next_file_number_ is atomic
   uint64_t file_number = versions_->NewFileNumber();
   std::string fname = GetTableFileName(file_number);
+  //printf("fname=%s", fname.c_str());
   // Fire events.
   ColumnFamilyData* cfd = sub_compact->compaction->column_family_data();
 #ifndef ROCKSDB_LITE
