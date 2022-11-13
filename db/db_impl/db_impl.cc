@@ -753,7 +753,7 @@ Status DBImpl::CloseHelper() {
 Status DBImpl::CloseImpl() { return CloseHelper(); }
 
 DBImpl::~DBImpl() {
-
+  printf("DB Impl Destory Function Called\n");
   profiling_print();
   all_profiling_print();
 
@@ -775,6 +775,7 @@ DBImpl::~DBImpl() {
 
   closing_status_ = CloseImpl();
   closing_status_.PermitUncheckedError();
+  printf("Close DB\n");
 }
 
 void DBImpl::MaybeIgnoreError(Status* s) const {
@@ -5944,7 +5945,7 @@ void profiling_print() {
 }
 
 void all_profiling_print() {
-
+  
   FILE * fp_ = fopen("number_life.out", "a");
   for(auto &x: number_life) {
     fprintf(fp_, "number=%lu level=%d lifetime=%d predict=%d predict_type=%d\n", x.first, number_level[x.first], x.second, predict[x.first], predict_type[x.first]);

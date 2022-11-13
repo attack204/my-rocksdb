@@ -32,7 +32,7 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), GetCompaction(), predict, predict_type, rank);
 
   printf("meta->fname=%s get_clock=%d\n", meta->fname.c_str(), get_clock());
-  fs_->SetFileLifetime(meta->fname, predict + get_clock());
+  fs_->SetFileLifetime(meta->fname, predict + get_clock(), get_clock());
 
   std::cout << "Finish:"
             << meta->fd.GetNumber() 

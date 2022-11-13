@@ -277,7 +277,7 @@ class Env : public Customizable {
                                  const EnvOptions& options) = 0;
 
   virtual Status SetFileLifetime(std::string& fname, 
-                                   uint64_t lifetime) = 0;
+                                   uint64_t lifetime, int clock) = 0;
   // Create an object that writes to a file with the specified name.
   // `WritableFile::Append()`s will append after any existing content.  If the
   // file does not already exist, creates it.
@@ -1438,8 +1438,8 @@ class EnvWrapper : public Env {
     return target_.env->NewWritableFile(f, r, options);
   }
   Status SetFileLifetime(std::string& fname, 
-                                   uint64_t lifetime) override {
-    return target_.env->SetFileLifetime(fname, lifetime);
+                                   uint64_t lifetime, int clock) override {
+    return target_.env->SetFileLifetime(fname, lifetime, clock);
   }
   Status ReopenWritableFile(const std::string& fname,
                             std::unique_ptr<WritableFile>* result,

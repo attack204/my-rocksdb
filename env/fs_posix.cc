@@ -372,8 +372,8 @@ class PosixFileSystem : public FileSystem {
                            IODebugContext* dbg) override {
     return OpenWritableFile(fname, options, false, result, dbg);
   }
-  IOStatus SetFileLifetime(std::string& fname, uint64_t lifetime) override {
-    return SetFileLifetime(fname, lifetime);
+  IOStatus SetFileLifetime(std::string& fname, uint64_t lifetime, int clock) override {
+    return SetFileLifetime(fname, lifetime, clock);
   }
 
   IOStatus ReopenWritableFile(const std::string& fname,
