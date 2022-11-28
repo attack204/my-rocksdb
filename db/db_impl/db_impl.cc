@@ -5894,9 +5894,11 @@ void add_level_file_num(int level) {
   level_file_num[level]++;
 }
 int get_ave_time(int level) {
+  if(!compacted_number[level]) return 0;
   return compact_level_lifetime[level] / compacted_number[level];
 }
 double get_predict_rate(int level) {
+  if(!compacted_number[level]) return 0;
   return (double) correct_predict_time[level] / compacted_number[level];
 }
 int min_int(int a, int b) {
