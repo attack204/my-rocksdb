@@ -1470,7 +1470,7 @@ Status CompactionJob::FinishCompactionOutputFile(
   FileMetaData* meta = outputs.GetMetaData();
   uint64_t output_number = meta->fd.GetNumber();
   assert(output_number != 0);
-  printf("FinishCompactionOutputFile fname=%s number=%ld\n", meta->fname, output_number);
+  printf("FinishCompactionOutputFile fname=%s number=%ld\n", meta->fname.c_str(), output_number);
   ColumnFamilyData* cfd = sub_compact->compaction->column_family_data();
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;

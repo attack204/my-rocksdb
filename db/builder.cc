@@ -166,7 +166,7 @@ Status BuildTable(
       get_predict(output_level, *meta, versions->GetColumnFamilySet()->GetDefault()->current(), nullptr, predict, predict_type, rank);
       //get_predict(output_level, *meta, nullptr, nullptr, predict, predict_type, rank);
 
-      printf("meta->fname=%s get_clock=%d lifetime=%ld\n", fname.c_str(), get_clock(), predict + get_clock());
+      printf("meta->fname=%s get_clock=%d lifetime=%d\n", fname.c_str(), get_clock(), predict + get_clock());
       fs->SetFileLifetime(fname, predict + get_clock(), get_clock());
 
 
