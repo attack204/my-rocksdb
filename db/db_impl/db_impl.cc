@@ -6403,13 +6403,13 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       int level_file_number = vstorage->NumLevelFiles(l);
       printf("level %d files num:%d: ", l, level_file_number);
        level_file_num[level + l] = level_file_number; //level
-      std::vector<FileMetaData*> level_file = vstorage->LevelFiles(l);
-      for(int i = 0; i < level_file_number; i++) {
-        FileMetaData *tmp = level_file[i];
-        std::cout << "["<< tmp->smallest.user_key().ToString()
-                  << "," << tmp->largest.user_key().ToString()
-                  << "]";
-      }
+      // std::vector<FileMetaData*> level_file = vstorage->LevelFiles(l);
+      // for(int i = 0; i < level_file_number; i++) {
+      //   FileMetaData *tmp = level_file[i];
+      //   std::cout << "["<< tmp->smallest.user_key().ToString()
+      //             << "," << tmp->largest.user_key().ToString()
+      //             << "]";
+      // }
       puts("");
     }
   }
