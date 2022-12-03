@@ -32,7 +32,20 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), GetCompaction(), predict, predict_type, rank);
 
   printf("meta->fname=%s get_clock=%d\n", meta->fname.c_str(), get_clock());
-  fs_->SetFileLifetime(meta->fname, predict + get_clock(), get_clock());
+  fs_->SetFileLifetime(meta->fname, predict + get_clock(), get_clock(), 0);
+
+  if(!update_input_file_lifetime) {
+    for(size_t i = 0; i < GetCompaction()->num_input_levels(); i++) {
+      //printf("vector[%ld] element:\n", i);
+      for(size_t j = 0; j < GetCompaction()->num_input_files(i); j++) {
+        FileMetaData *tmp = GetCompaction()->input(i, j);
+        fs_->SetFileLifetime(tmp->fname, get_clock(), get_clock(), 1);
+      }
+    }
+    update_input_file_lifetime = 1;
+  }
+
+  
 
   std::cout << "Finish:"
             << meta->fd.GetNumber() 

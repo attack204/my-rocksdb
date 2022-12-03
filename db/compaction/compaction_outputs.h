@@ -30,7 +30,7 @@ class CompactionOutputs {
  public:
 
   FileSystemPtr fs_;//自己加的
-
+  bool update_input_file_lifetime = 0;
   // compaction output file
   struct Output {
     Output(FileMetaData&& _meta, const InternalKeyComparator& _icmp,

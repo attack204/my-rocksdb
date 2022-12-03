@@ -5917,8 +5917,9 @@ int level_round[LEVEL];
 // int CYCLE = 25;
 
 //Growing Parameter
-int level_len[LEVEL] = {2, 1, 6, 7, 15, 8, 10};
-int CYCLE = 40;
+//int level_len[LEVEL] = {5, 1, 6, 7, 15, 8, 10};
+int level_len[LEVEL] = {5, 1, 1, 1, 1, 1, 1};
+int CYCLE = 9;
 
 class life_meta {
 public:
