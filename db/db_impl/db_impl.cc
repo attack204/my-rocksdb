@@ -5920,6 +5920,7 @@ int level_round[LEVEL];
 //int level_len[LEVEL] = {5, 1, 6, 7, 15, 8, 10};
 int level_len[LEVEL] = {5, 1, 1, 1, 1, 1, 1};
 int CYCLE = 9;
+const int BEGIN_LEVEL_NUM = 5;
 
 class life_meta {
 public:
@@ -5969,7 +5970,7 @@ void all_profiling_print() {
 
 
 struct timeval time;
-uint64_t pre_time;
+uint64_t prev_time;
 void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
 
    
@@ -5989,8 +5990,8 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   long long us = (time.tv_sec*1000 + time.tv_usec/1000);
  // printf("s: %ld, ms: %ld\n", time.tv_sec, );
  
-  printf("%10s flush_num=%d compaction_num=%d diff_time=%ld time=%d level=%d\n", s, flush_num, compaction_num, us - pre_time, get_clock(), level);
-  pre_time = us;
+  printf("%10s flush_num=%d compaction_num=%d diff_time=%llu time=%d level=%d\n", s, flush_num, compaction_num, us - prev_time, get_clock(), level);
+  prev_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
   }
@@ -6355,32 +6356,32 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
 
     //T3 被level=4某个不存在SST file compact掉，我们假设此SST file存在
-    if(predict_ == INF) { //目前我们认为只有当没有overlap的时候才会触发此算法
-      int upper_level = level - 1;
-      int rank2 = get_rank(upper_level, file, v, compaction_);
-      int offset2 = get_offset(upper_level);
-      tmp_rank = rank2;
-      int T3 = rank2;
-      if(rank2 <= offset2) 
-          T3 = rank2;
-      else { 
-          rank2 -= offset2;
-          T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
-      }
-      if(T3 < predict_) {
-        predict_ = 150;
-        predict_type_ = 1;
-      }
-    }
+    // if(predict_ == INF) { //目前我们认为只有当没有overlap的时候才会触发此算法
+    //   int upper_level = level - 1;
+    //   int rank2 = get_rank(upper_level, file, v, compaction_);
+    //   int offset2 = get_offset(upper_level);
+    //   tmp_rank = rank2;
+    //   int T3 = rank2;
+    //   if(rank2 <= offset2) 
+    //       T3 = rank2;
+    //   else { 
+    //       rank2 -= offset2;
+    //       T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
+    //   }
+    //   if(T3 < predict_) {
+    //     predict_ = 150;
+    //     predict_type_ = 1;
+    //   }
+    // }
     //T1 level=5自己触发compaction将自己compact掉
     //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
 
-    int rank = get_rank(level, file, v, compaction_);
+    int rank = get_rank(level, file, v, compaction_) / BEGIN_LEVEL_NUM; 
 
     int T1 = CYCLE * (rank / level_len[level]) + rank % level_len[level];
     int lower_level = level - 1;
-    if(lower_level != -1) 
-      T1 += get_offset(lower_level);
+    // if(lower_level != -1) 
+    //   T1 += get_offset(lower_level);
     if(T1 < predict_) {
       predict_ = T1;
       predict_type_ = 0;
@@ -6390,7 +6391,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
   uint64_t number = get_number(file);
-  printf("PredictSetFileLifetime number=%ld lifetime=%ld\n", number, predict_);
+  printf("PredictSetFileLifetime number=%ld lifetime=%d\n", number, predict_);
   predict[number] = predict_;
   predict_type[number] = predict_type_;
   if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
