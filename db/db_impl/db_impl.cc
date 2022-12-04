@@ -6165,7 +6165,7 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
   //需要把input中的file都忽略掉
   const std::vector<FileMetaData*>& files = vstorage_t->files_[level];
   if(level == 0) {
-    return files.size();
+    return files.size() / BEGIN_LEVEL_NUM;;
   }
   uint32_t n = files.size();
   std::vector<Fsize> temp;
@@ -6223,7 +6223,7 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
   // std::cout << "files.unique_id[1]=" << file.unique_id[1]
   //           << " result=" << result 
   //           << " temp_size=" << temp.size() << '\n';
-  return result;
+  return result / BEGIN_LEVEL_NUM;;
 }
 
 
@@ -6269,7 +6269,7 @@ int get_offset(int level) {
 //pre_time是之前的层所消耗的时间
 //target是要最小化的时间
 void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compaction* compaction_, int pre_time, int &predict_, int &predict_type_, int &tmp_rank) {
-  if(level == 1) return ;
+  if(level == 0) return ;
   int upper_level = level - 1;
 
   const InternalKey* begin = &file.smallest;
@@ -6312,23 +6312,23 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
       int rank = get_rank(upper_level, *f, v, compaction_);
 
-      FILE * fp = fopen("rank.out", "a");
-      fprintf(fp, "file.unique_id[1]=%ld upper_level=%d rank=%d\n", file.unique_id[1], upper_level, rank);
-      fclose(fp);
+      // FILE * fp = fopen("rank.out", "a");
+      // fprintf(fp, "file.unique_id[1]=%ld upper_level=%d rank=%d\n", file.unique_id[1], upper_level, rank);
+      // fclose(fp);
 
       tmp_rank = rank;
-      int offset = get_offset(upper_level);
-      int T2;
-      if(deep == -1) {
-        if(rank <= offset)
-          T2 = rank;
-        else { 
-          rank -= offset;
-          T2 = CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level] + CYCLE - level_len[level];
-        }
-      } else {
-        T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
-      }
+      //int offset = get_offset(upper_level);
+      int T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
+      // if(deep == -1) {
+      //   if(rank <= offset)
+      //     T2 = rank;
+      //   else { 
+      //     rank -= offset;
+      //     T2 = CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level] + CYCLE - level_len[level];
+      //   }
+      // } else {
+      //   T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
+      // }
       if(T2 < predict_) {
         predict_ = T2 + pre_time;
         predict_type_ = deep;
@@ -6378,7 +6378,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     //T1 level=5自己触发compaction将自己compact掉
     //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
 
-    T1_rank = get_rank(level, file, v, compaction_) / BEGIN_LEVEL_NUM; 
+    T1_rank = get_rank(level, file, v, compaction_);
 
     int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
     int lower_level = level - 1;
@@ -6447,7 +6447,7 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       if(rank_.find(number) != rank_.end()) {
         rank = rank_[number];
       }
-      printf("new_id=%llu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
+      printf("new_id=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
       std::cout << "["<< y.smallest.user_key().ToString()
                 << "," << y.largest.user_key().ToString()
                 << "]" << '\n';

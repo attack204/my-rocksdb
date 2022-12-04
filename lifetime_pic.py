@@ -59,6 +59,8 @@ for l in range(0, 6): #each level
     data0_list_miss = [] #compacted by current level but prediction is incorrent
     THRESHOLD = 5 * (l + 1)
     #print("test size=%d", len(x_list))
+    level0_num = 0 #compacted by current level num
+    level1_num = 1 #compacted by top level num
     for i in range(0, len(x_list)):
         
         if x_list[i] == l:
@@ -85,13 +87,17 @@ for l in range(0, 6): #each level
             
             tot = tot + 1
             kind_num[key] += 1
+            if real_type[i] == -1:
+                level1_num += 1
+            else:
+                level0_num += 1
             if diff >= -THRESHOLD and diff <= THRESHOLD:
                 correct = correct + 1
                 kind_correct[key] += 1
 
     if tot == 0:
         continue
-    print("level %d correct rate=%lf average_lifetime=%lf" % (l, correct / tot, sum / tot)) #right number 
+    print("level %d correct rate=%.3lf average_lifetime=%.3lf level0_num=%d level1_num=%d" % (l, correct / tot, sum / tot, level0_num, level1_num)) #right number 
     for typ in range(-6, 2):
         key = str(typ)
         if (kind_num[key] != 0):
