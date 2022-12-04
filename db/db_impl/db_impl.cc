@@ -5886,6 +5886,7 @@ std::map<uint64_t, int> predict; //key: file_number value: 预测的lifetime的�
 std::map<uint64_t, int> predict_type;
 std::map<uint64_t, int> number_life;
 std::map<uint64_t, int> number_level;
+std::map<uint64_t, int> rank_;
 std::vector<int> time_level; //Flush/Compaction的level按时间递增的分布
 int get_clock() {
   return flush_num + compaction_num;
@@ -6344,6 +6345,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 //  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
 
   predict_ = INF;
+  int T1_rank;
   if(level == 0) {
     predict_ = 1;
     predict_type_ = 0;
@@ -6376,9 +6378,9 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     //T1 level=5自己触发compaction将自己compact掉
     //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
 
-    int rank = get_rank(level, file, v, compaction_) / BEGIN_LEVEL_NUM; 
+    T1_rank = get_rank(level, file, v, compaction_) / BEGIN_LEVEL_NUM; 
 
-    int T1 = CYCLE * (rank / level_len[level]) + rank % level_len[level];
+    int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
     int lower_level = level - 1;
     // if(lower_level != -1) 
     //   T1 += get_offset(lower_level);
@@ -6391,7 +6393,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
   uint64_t number = get_number(file);
-  printf("PredictSetFileLifetime number=%ld lifetime=%d\n", number, predict_);
+  rank_[number] = T1_rank;
   predict[number] = predict_;
   predict_type[number] = predict_type_;
   if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
@@ -6439,11 +6441,13 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
     for(auto &x: files_output) {
       const FileMetaData y = x->meta; 
      
-      int rank;
       uint64_t number = get_number(y);
       pre[number] = get_clock();
-
-      printf("new_id=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
+      int rank = 0;
+      if(rank_.find(number) != rank_.end()) {
+        rank = rank_[number];
+      }
+      printf("new_id=%llu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
       std::cout << "["<< y.smallest.user_key().ToString()
                 << "," << y.largest.user_key().ToString()
                 << "]" << '\n';

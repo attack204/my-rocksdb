@@ -52,6 +52,7 @@ for l in range(0, 6): #each level
     correct = 0
     sum = 0
     data1_list = [] #compacted by unknown file
+    data1_list_miss = []
     datan1_list = [] #compacted by top level
     datan1_list_miss = [] #compacted by top level but prediction is incorrent
     data0_list = [] #compacted by current level and prediction is right
@@ -67,9 +68,12 @@ for l in range(0, 6): #each level
             diff = predict_list[i] - lifetime_list[i]
             
             if type_list[i] == 1:
-                data1_list.append(diff)
+                if real_type[i] == -1:
+                    data1_list.append(diff)
+                else:
+                    data1_list_miss.append(diff)
             elif type_list[i] < 0:
-                if real_type[i] == 1: #compacted
+                if real_type[i] == -1: #compacted
                     datan1_list.append(diff)
                 else:
                     datan1_list_miss.append(diff)
@@ -106,5 +110,8 @@ for l in range(0, 6): #each level
         plt.show()
     if(len(data1_list) != 0):
         plt.hist(data1_list, bins=20, color="black")
+        plt.show()
+    if((len(data1_list_miss) != 0)):
+        plt.hist(data1_list_miss, bins=20, color="brown")
         plt.show()
 
