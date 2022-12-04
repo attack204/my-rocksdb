@@ -2,15 +2,10 @@ from curses import keyname
 from pickle import BINSTRING
 import matplotlib.pyplot as plt
 import numpy as np
-THRESHOLD = 25 
 x_list = []
 type_list = []
 lifetime_list = []
 predict_list = []
-data1_list = []
-datan1_list = []
-data0_list = []
-sum = 0
 kind_correct = {
     "0": 0,
     "-1": 0,
@@ -18,7 +13,8 @@ kind_correct = {
     "-2": 0,
     "-3": 0,
     "-4": 0,
-    "-5": 0
+    "-5": 0,
+    "-6": 0
 }
 kind_num = {
     "0": 0,
@@ -27,7 +23,8 @@ kind_num = {
     "-2": 0,
     "-3": 0,
     "-4": 0,
-    "-5": 0
+    "-5": 0,
+    "-6": 0
 }
 kind_ave = {
     "0": 0,
@@ -36,7 +33,8 @@ kind_ave = {
     "-2": 0,
     "-3": 0,
     "-4": 0,
-    "-5": 0
+    "-5": 0,
+    "-6": 0
 }
 
 for line in open("lifetime.out"):
@@ -47,39 +45,44 @@ for line in open("lifetime.out"):
         lifetime_list.append(int(line.split(' ')[2]))
         predict_list.append(int(line.split(' ')[3]))
 
-tot = 0
-correct = 0
-for i in range(0, len(x_list)):
-    if x_list[i] == 5 or x_list[i] >= 0:
-        key=str(type_list[i])
-        sum = sum + lifetime_list[i]
-        kind_ave[key] += lifetime_list[i]
-        diff = predict_list[i] - lifetime_list[i]
-        if type_list[i] == 1:
-            data1_list.append(diff)
-        elif type_list[i] == -1:
-            datan1_list.append(diff)
-        elif type_list[i] == 0:
-            data0_list.append(diff)
-        tot = tot + 1
-        kind_num[key] += 1
-        if diff >= -THRESHOLD and diff <= THRESHOLD:
-            correct = correct + 1
-            kind_correct[key] += 1
+for l in range(0, 6): #each level
+    tot = 0 
+    correct = 0
+    sum = 0
+    data1_list = []
+    datan1_list = [] #compact by top level
+    data0_list = [] 
+    THRESHOLD = 5 * (l + 1)
+    for i in range(0, len(x_list)):
+        if x_list[i] == l:
+            key=str(type_list[i])
+            sum = sum + lifetime_list[i]
+            kind_ave[key] += lifetime_list[i]
+            diff = predict_list[i] - lifetime_list[i]
+            if type_list[i] == 1:
+                data1_list.append(diff)
+            elif type_list[i] < 0:
+                datan1_list.append(diff)
+            elif type_list[i] == 0:
+                data0_list.append(diff)
+            tot = tot + 1
+            kind_num[key] += 1
+            if diff >= -THRESHOLD and diff <= THRESHOLD:
+                correct = correct + 1
+                kind_correct[key] += 1
 
-
-print("ALL", correct / tot)
-if (kind_num["0"] != 0):
-	print("T1 Accuracy", kind_correct["0"] / kind_num["0"], "AveLifetime", kind_ave["0"] / kind_num["0"])
-if (kind_num["-1"] != 0):
-	print("T2 Accuracy", kind_correct["-1"] / kind_num["-1"],  "AveLifetime", kind_ave["-1"] / kind_num["-1"])
-if (kind_num["1"] != 0):
-	print("T3 Accuracy", kind_correct["1"] / kind_num["1"],  "AveLifetime", kind_ave["1"] / kind_num["1"])
-print(sum / tot)
-plt.hist(data0_list, bins=20)
-plt.show()
-plt.hist(datan1_list, bins=20, color="yellow")
-plt.show()
-plt.hist(data1_list, bins=20, color="red")
-plt.show()
+    if tot == 0:
+        continue
+    print("level %d correct rate=%lf average_lifetime=%lf" % (l, correct / tot, sum / tot)) #right number 
+    for typ in range(-6, 2):
+        key = str(typ)
+        if (kind_num[key] != 0):
+            print("T%d Accuracy=%.3lf AveLifetime=%.3lf num=%d" % (typ, kind_correct[key] / kind_num[key], kind_ave[key] / kind_num[key], kind_num[key]))
+    plt.hist(data0_list, bins=20, color="blue")
+    plt.show()
+    if(datan1_list not = 0):
+        plt.hist(datan1_list, bins=20, color="yellow")
+        plt.show()
+    plt.hist(data1_list, bins=20, color="red")
+    plt.show()
 

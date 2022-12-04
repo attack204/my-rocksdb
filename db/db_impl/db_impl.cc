@@ -5923,14 +5923,16 @@ int CYCLE = 9;
 
 class life_meta {
 public:
-  life_meta(int type_, int lifetime_, int predict_lifetime_) {
+  life_meta(int type_, int lifetime_, int predict_lifetime_, int real_type_) {
     type = type_;
     lifetime = lifetime_;
     predict_lifetime = predict_lifetime_;
+    real_type = real_type_ == 0 ? 0 : -1;
   }
-  int type;
+  int type; //predict compacted reason
   int lifetime;
   int predict_lifetime;
+  int real_type; //real compacted reason
 };
 std::map<int, std::vector<life_meta> > life_profiling;
 
@@ -5958,7 +5960,7 @@ void all_profiling_print() {
   for(int i = 0; i <= CompactLevel; i++) {;
     for(auto &x: life_profiling[i]) {
      //   int diff_time = x.predict_lifetime - x.lifetime;
-        fprintf(fp, "%d %d %d %d\n", i, x.type, x.lifetime, x.predict_lifetime);
+        fprintf(fp, "%d %d %d %d %d\n", i, x.type, x.lifetime, x.predict_lifetime, x.real_type);
     }
   }
   fclose(fp);
@@ -5987,7 +5989,7 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   long long us = (time.tv_sec*1000 + time.tv_usec/1000);
  // printf("s: %ld, ms: %ld\n", time.tv_sec, );
  
-  printf("%-10s flush_num=%d compaction_num=%d diff_time=%ld time=%d level=%d\n", s, flush_num, compaction_num, us - pre_time, get_clock(), level);
+  printf("%10s flush_num=%d compaction_num=%d diff_time=%ld time=%d level=%d\n", s, flush_num, compaction_num, us - pre_time, get_clock(), level);
   pre_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
@@ -6010,13 +6012,13 @@ void update_factor_predict(int level) {
 
 //level层的某个文件被compact后调用
 //统计相关信息
-void add_calc(int level, int lifetime, int predict_lifetime, int type) {
+void add_calc(int level, int lifetime, int predict_lifetime, int type, int real_type) {
   compacted_number[level]++;
   correct_predict_time[level] += (abs(lifetime - predict_lifetime) <= PREDICT_THRESHOLD);
   compact_level_lifetime[level] += lifetime;
   //if(type == 1)   
   //type = 0统计T1, type=-1统计T2, type=1统计T3
-  life_profiling[level].push_back(life_meta(type, lifetime, predict_lifetime));
+  life_profiling[level].push_back(life_meta(type, lifetime, predict_lifetime, real_type));
 }
 
 
@@ -6052,7 +6054,7 @@ void print_compaction(Compaction *compaction, int level) {
         printf(" lifetime=%d predict_time=%d predict_type=%d compaction_type=%ld level_file_num=%d", lifetime, predict[number], predict_type[number], i,level_file_num[compaction->level() + i]);
         number_life[number] = lifetime;
         number_level[number] = level;
-        add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number]);
+        add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number], i);
       } else {
         //puts("GG"); //can't reach here
         printf("ERROR: can't find SST's lifetime");
@@ -6346,15 +6348,13 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     predict_type_ = 0;
   } else {
 
-    // T2 准的离谱
-    //level=5被level=1-4存在的compact
+    // T2: level=5被level=1-4存在的compact
     //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
 
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); //注释掉这个可以屏蔽T2的predict
 
 
-    //T3 实际上growing状态下T3并不好使
-    //被level=4某个不存在SST file compact掉，我们假设此SST file存在
+    //T3 被level=4某个不存在SST file compact掉，我们假设此SST file存在
     if(predict_ == INF) { //目前我们认为只有当没有overlap的时候才会触发此算法
       int upper_level = level - 1;
       int rank2 = get_rank(upper_level, file, v, compaction_);
@@ -6372,9 +6372,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
         predict_type_ = 1;
       }
     }
-
-    //T1
-    //level=5自己触发compaction将自己compact掉
+    //T1 level=5自己触发compaction将自己compact掉
     //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
 
     int rank = get_rank(level, file, v, compaction_);
