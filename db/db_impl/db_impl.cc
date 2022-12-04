@@ -5965,8 +5965,12 @@ void all_profiling_print() {
 }
 
 
+
+struct timeval time;
+uint64_t pre_time;
 void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
 
+   
   if(log_type == FLUSH) {
     flush_num++;
     flush_level[level]++;
@@ -5979,7 +5983,12 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   FILE * fp = fopen("level.out", "a");
   fprintf(fp, "%d %d\n", get_clock(), level);
   fclose(fp);
-  printf("%s flush_num=%d compaction_num=%d time=%d level=%d\n", s, flush_num, compaction_num, get_clock(), level);
+  gettimeofday(&time, NULL);
+  long long us = (time.tv_sec*1000 + time.tv_usec/1000);
+ // printf("s: %ld, ms: %ld\n", time.tv_sec, );
+ 
+  printf("%-10s flush_num=%d compaction_num=%d diff_time=%ld time=%d level=%d\n", s, flush_num, compaction_num, us - pre_time, get_clock(), level);
+  pre_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
   }
