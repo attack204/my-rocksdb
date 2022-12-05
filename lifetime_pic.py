@@ -80,10 +80,10 @@ for l in range(0, 6): #each level
                 else:
                     datan1_list_miss.append(diff)
             elif type_list[i] == 0:
-                if real_type[i] == 0: 
+                if real_type[i] == 0:  
                     data0_list.append(diff)
                 else:
-                    data0_list_miss.append(diff)
+                    data0_list_miss.append(diff) #type_list[i] == 0 but real_type[i] == 1
             
             tot = tot + 1
             kind_num[key] += 1
