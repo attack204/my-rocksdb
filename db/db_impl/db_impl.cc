@@ -5912,29 +5912,26 @@ int last_compact[LEVEL];
 int star_time[LEVEL];
 int level_round[LEVEL];
 
-
-//Stable Parameter
-// int level_len[8] = {2, 1, 1, 4, 5, 12};
-// int CYCLE = 25;
-
-//Growing Parameter
-//int level_len[LEVEL] = {5, 1, 6, 7, 15, 8, 10};
 int level_len[LEVEL] = {5, 1, 1, 1, 1, 1, 1};
 int CYCLE = 9;
-const int BEGIN_LEVEL_NUM = 5;
 
 class life_meta {
 public:
-  life_meta(int type_, int lifetime_, int predict_lifetime_, int real_type_) {
+  life_meta(int type_, int lifetime_, int predict_lifetime_, int real_type_, uint64_t fnumber_, int time_clock_) {
     type = type_;
     lifetime = lifetime_;
     predict_lifetime = predict_lifetime_;
     real_type = real_type_ == 0 ? 0 : -1;
+    fnumber = fnumber_;
+    time_clock = time_clock_;
+
   }
   int type; //predict compacted reason
   int lifetime;
   int predict_lifetime;
   int real_type; //real compacted reason
+  uint64_t fnumber;
+  int time_clock;
 };
 std::map<int, std::vector<life_meta> > life_profiling;
 
@@ -5962,13 +5959,11 @@ void all_profiling_print() {
   for(int i = 0; i <= CompactLevel; i++) {;
     for(auto &x: life_profiling[i]) {
      //   int diff_time = x.predict_lifetime - x.lifetime;
-        fprintf(fp, "%d %d %d %d %d\n", i, x.type, x.lifetime, x.predict_lifetime, x.real_type);
+        fprintf(fp, "%d %d %d %d %d %ld %d\n", i, x.predict_lifetime, x.type, x.lifetime, x.real_type, x.fnumber, x.time_clock);
     }
   }
   fclose(fp);
 }
-
-
 
 struct timeval time;
 uint64_t prev_time;
@@ -5989,16 +5984,11 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   fclose(fp);
   gettimeofday(&time, NULL);
   long long us = (time.tv_sec*1000 + time.tv_usec/1000);
- // printf("s: %ld, ms: %ld\n", time.tv_sec, );
- 
+
   printf("%10s flush_num=%d compaction_num=%d diff_time=%llu time=%d level=%d\n", s, flush_num, compaction_num, us - prev_time, get_clock(), level);
   prev_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
-  }
-
-  if((flush_num + compaction_num) % 50 == 0) {
-    //profiling_print();
   }
 }
 
@@ -6014,27 +6004,15 @@ void update_factor_predict(int level) {
 
 //level层的某个文件被compact后调用
 //统计相关信息
-void add_calc(int level, int lifetime, int predict_lifetime, int type, int real_type) {
+void add_calc(int level, int lifetime, int predict_lifetime, int type, int real_type, uint64_t fnumber, int time_clock) {
   compacted_number[level]++;
   correct_predict_time[level] += (abs(lifetime - predict_lifetime) <= PREDICT_THRESHOLD);
   compact_level_lifetime[level] += lifetime;
-  //if(type == 1)   
-  //type = 0统计T1, type=-1统计T2, type=1统计T3
-  life_profiling[level].push_back(life_meta(type, lifetime, predict_lifetime, real_type));
+  life_profiling[level].push_back(life_meta(type, lifetime, predict_lifetime, real_type, fnumber, time_clock));
 }
 
 
 uint64_t get_number(const FileMetaData tmp) {
-  //UniqueId64x2 unique_id = tmp.unique_id;
-  // std::string id;
-  // std::string unique_id_str;
-  // if (unique_id != kNullUniqueId64x2) {
-  //   unique_id_str = EncodeUniqueIdBytes(&unique_id);
-  // }
-  // std::cout << "original unique_id = " << unique_id_str << "hashed id = " << base << '\n';
-  //return tmp.unique_id[1];
-  //assert(tmp.fd.GetNumber() == tmp.fnumber);
- // printf("tmp.fd.GetNumber()=%ld tmp.fnumber=%ld\n", tmp.fd.GetNumber(), tmp.fnumber);
   return tmp.fd.GetNumber();
 }
 
@@ -6049,16 +6027,14 @@ void print_compaction(Compaction *compaction, int level) {
       FileMetaData *tmp = compaction->input(i, j);
       uint64_t number = get_number(*tmp);
       printf("number=%lu clock=%d ", number, get_clock());
-        // std::cout << "smallest_key="<< tmp->smallest.user_key().ToString()
-        //       << " largest_key=" << tmp->largest.user_key().ToString();   
+
       if(pre.find(number) != pre.end()) {
         int lifetime = get_clock() - pre[number];
         printf(" lifetime=%d predict_time=%d predict_type=%d compaction_type=%ld level_file_num=%d", lifetime, predict[number], predict_type[number], i,level_file_num[compaction->level() + i]);
         number_life[number] = lifetime;
         number_level[number] = level;
-        add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number], i);
+        add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number], i, number, get_clock());
       } else {
-        //puts("GG"); //can't reach here
         printf("ERROR: can't find SST's lifetime");
       }
       putchar('\n');
@@ -6133,33 +6109,9 @@ void SortFileByRoundRobin(const InternalKeyComparator& icmp,
 
 //获取在满足largestKey > cp的前提下，有多少比这个file的LargetKey小
 int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* compaction_) {
-
-  printf("get_rank Begin\n");
+  int BEGIN_LEVEL_NUM = (level == 0 ? 1 : 5);
   int result = -1;
 
-//  int first_large = -1, file_pos = -1;
-//   auto vstorage = v->storage_info();
-//   std::vector<FileMetaData*> level_file = vstorage->LevelFiles(level);
-//   InternalKey cp = vstorage->GetCompactCursors().at(level);
-//   const InternalKeyComparator& icmp = *(vstorage->InternalComparator());
-//   for(int i = 0; i < vstorage->NumLevelFiles(level); i++) {
-//     if((cp.Valid() && icmp.Compare(level_file[i]->largest, cp) > 0) && first_large == -1) {
-//       first_large = i;
-//     }
-//     if(i + 1 < vstorage->NumLevelFiles(level) && icmp.Compare(file.smallest, level_file[i]->smallest) > 0 
-//        && icmp.Compare(file.smallest, level_file[i + 1]->largest) < 0) {
-//       file_pos = i;
-//     }
-//   }
-//   if(first_large == -1) first_large = 0; //这里的次数非常少
-  
-//   if(file_pos >= first_large) 
-//     result = file_pos - first_large; //如果说在first_large之后，那么rank就是file_pos - first_large
-//   else 
-//     result = vstorage->NumLevelFiles(level) - first_large + file_pos; //否则要转一圈才能compact
-
-//   printf("get_rank first_large=%d file_pos=%d files[level].size()=%d result=%d\n", first_large, file_pos, vstorage->NumLevelFiles(level), result);
- 
   VersionStorageInfo* vstorage_t = v->storage_info();
   FileMetaData file_tmp = file;
   //需要把input中的file都忽略掉
@@ -6172,98 +6124,36 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
   int num = 0;
   for (size_t i = 0; i < n; i++) {
     bool flag = 0;
-    //printf("%ld\n", get_number(*files[i]));
     if(compaction_ != nullptr) { //主要注意，level=0的情况依然获取不到compaction
       size_t target_level = level - compaction_->start_level();
-      if(target_level >= 0) {
-        // FILE  *fp = fopen("debug.out", "a");
-        // fprintf(fp, "target_level=%ld\n", target_level);
-        // fprintf(fp, "num_input_files=%ld\n",  compaction_->num_input_files(target_level));
-        // fclose(fp);
-        for(size_t j = 0; j < compaction_->num_input_files(target_level); j++) {
-          // printf("NumInputFiles i=%d j=%d file_number=%ld input_number=%ld level=%d num_input_files=%d\n", i, j, get_number(*files[i]), get_number(*(compaction_->input(target_level, j))), target_level, compaction_->num_input_files(target_level));
-          // printf("NumInputFiles i=%d j=%d level=%d\n", i, j, target_level);
-          
-          if(files[i] != nullptr && compaction_->input(target_level, j) != nullptr
-             && get_number(*files[i]) == get_number(*(compaction_->input(target_level, 0)))
-            ) {
-            flag = 1;
-            break;
-          }
+      for(size_t j = 0; j < compaction_->num_input_files(target_level); j++) {
+        if(files[i] != nullptr && compaction_->input(target_level, j) != nullptr
+            && get_number(*files[i]) == get_number(*(compaction_->input(target_level, 0)))
+          ) {
+          flag = 1;
+          break;
         }
       }
     }
     if(!flag) {
-      // temp[i].index = i;
-      // temp[i].file = files[i];
       num++;
       temp.push_back({i, files[i]});
     }
     
   }
   temp.push_back({static_cast<size_t>(num), &file_tmp});
-  printf("Before SortFileByRoundRobin\n");
 
   if(temp.size() != 1) {
     SortFileByRoundRobin(*(vstorage_t->internal_comparator_), &(vstorage_t->compact_cursor_),  vstorage_t->level0_non_overlapping_, level, &temp);
   }
-
-  // FileMetaData file_tmp = file;
-  // vstorage.AddFile(level, &file_tmp);
-  // vstorage.SortFileRR();
- 
   for(long unsigned int i = 0 ; i < temp.size(); i++) {
-    //int index = vstorage.FilesByCompactionPri(level)[i];
-    //std::cout << "levelFiles[" << i << "].unique_id[1]=" << vstorage->LevelFiles(level)[index]->unique_id[1] << '\n';
     if(file_tmp.unique_id[1] == temp[i].file->unique_id[1]) {
       result = i;
       break;
     }
   }
-  // std::cout << "files.unique_id[1]=" << file.unique_id[1]
-  //           << " result=" << result 
-  //           << " temp_size=" << temp.size() << '\n';
+  printf("GetRankFinished: level=%d number=%ld rank=%d level_size=%ld BEGIN_LEVEL_NUM=%d\n", level, file.fnumber, result, temp.size(), BEGIN_LEVEL_NUM);
   return result / BEGIN_LEVEL_NUM;;
-}
-
-
-// //获取在满足largestKey > cp的前提下，有多少比这个file的LargetKey小
-// int get_rank2(int level, const FileMetaData &file, Version *v) {
-//   auto vstorage = v->storage_info();
-//   auto user_cmp = vstorage->InternalComparator()->user_comparator();
-
-   
-//   //const InternalKey* begin = &file.smallest;
-//   const InternalKey* end = &file.largest;
-//   int last = 0;
-//   std::vector<FileMetaData*> level_file = vstorage->LevelFiles(level);
-//   for(int i = 0; i < vstorage->NumLevelFiles(level); i++) {
-//     FileMetaData *f = level_file[i];
-//     const Slice file_start = f->smallest.user_key();
-//     //const Slice file_end = f->largest.user_key();
-//     if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->Encode()) > 0) {
-//       last = i;
-//       break;
-//     }
-//   }
-//   if(!last) {
-//     puts("Can't find rank2");
-//     last = vstorage->NumLevelFiles(level) - 1;
-//   } else {
-//     puts("Find rank2");
-//   }
-//   return last;
-  
-// }
-
-
-int get_offset(int level) {
-  int res = level_len[level];
-  for(int i = time_level.size() - 1; i >= 0 && (time_level.size() - i) <= static_cast<long unsigned int>(level_len[level]); i--) {
-    if(time_level[i] == level)
-      res--;
-  }
-  return res;
 }
 
 //pre_time是之前的层所消耗的时间
@@ -6271,7 +6161,6 @@ int get_offset(int level) {
 void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compaction* compaction_, int pre_time, int &predict_, int &predict_type_, int &tmp_rank) {
   if(level == 0) return ;
   int upper_level = level - 1;
-
   const InternalKey* begin = &file.smallest;
   const InternalKey* end   = &file.largest;
   auto vstorage = v->storage_info();
@@ -6282,22 +6171,12 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
     const Slice file_start = f->smallest.user_key();
     const Slice file_end = f->largest.user_key();
     if (begin != nullptr && user_cmp->CompareWithoutTimestamp(file_end, begin->user_key()) < 0) {
-      // "f" is completely before specified range; skip it
     } else if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->user_key()) > 0) {
-      // "f" is completely after specified range; skip it
     } else {
-
       bool flag = 0;
       if(compaction_ != nullptr) { //主要注意，level=0的情况依然获取不到compaction
         for(size_t target_level = 0; target_level < compaction_->num_input_levels(); target_level++) {
-          // FILE  *fp = fopen("debug.out", "a");
-          // fprintf(fp, "target_level=%ld\n", target_level);
-          // fprintf(fp, "num_input_files=%ld\n",  compaction_->num_input_files(target_level));
-          // fclose(fp);
           for(size_t j = 0; j < compaction_->num_input_files(target_level); j++) {
-            // printf("NumInputFiles i=%d j=%d file_number=%ld input_number=%ld level=%d num_input_files=%d\n", i, j, get_number(*files[i]), get_number(*(compaction_->input(target_level, j))), target_level, compaction_->num_input_files(target_level));
-            // printf("NumInputFiles i=%d j=%d level=%d\n", i, j, target_level);
-            
             if(get_number(*f) == get_number(*(compaction_->input(target_level, j)))
               ) {
               flag = 1;
@@ -6311,24 +6190,9 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
       if(flag) continue;
 
       int rank = get_rank(upper_level, *f, v, compaction_);
-
-      // FILE * fp = fopen("rank.out", "a");
-      // fprintf(fp, "file.unique_id[1]=%ld upper_level=%d rank=%d\n", file.unique_id[1], upper_level, rank);
-      // fclose(fp);
-
       tmp_rank = rank;
-      //int offset = get_offset(upper_level);
       int T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
-      // if(deep == -1) {
-      //   if(rank <= offset)
-      //     T2 = rank;
-      //   else { 
-      //     rank -= offset;
-      //     T2 = CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level] + CYCLE - level_len[level];
-      //   }
-      // } else {
-      //   T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
-      // }
+      printf("T2 Prediction upper_level=%d number=%ld T2=%d\n", upper_level, file.fnumber, T2);
       if(T2 < predict_) {
         predict_ = T2 + pre_time;
         predict_type_ = deep;
@@ -6343,52 +6207,37 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
 //  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
-
+  printf("get_predict begin: number=%ld clock=%d level=%d compact_level_number=%d\n", file.fnumber, get_clock(), level, compact_level[level]);
   predict_ = INF;
-  int T1_rank;
+  int T1_rank = 0;
   if(level == 0) {
-    predict_ = 1;
+    predict_ = get_rank(level, file, v, compaction_);
     predict_type_ = 0;
   } else {
 
     // T2: level=5被level=1-4存在的compact
     //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
+    dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
 
-    dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); //注释掉这个可以屏蔽T2的predict
-
-
-    //T3 被level=4某个不存在SST file compact掉，我们假设此SST file存在
-    // if(predict_ == INF) { //目前我们认为只有当没有overlap的时候才会触发此算法
-    //   int upper_level = level - 1;
-    //   int rank2 = get_rank(upper_level, file, v, compaction_);
-    //   int offset2 = get_offset(upper_level);
-    //   tmp_rank = rank2;
-    //   int T3 = rank2;
-    //   if(rank2 <= offset2) 
-    //       T3 = rank2;
-    //   else { 
-    //       rank2 -= offset2;
-    //       T3 = CYCLE * (rank2 / level_len[upper_level]) + rank2 % level_len[upper_level] + CYCLE - level_len[level];
-    //   }
-    //   if(T3 < predict_) {
-    //     predict_ = 150;
-    //     predict_type_ = 1;
-    //   }
-    // }
-    //T1 level=5自己触发compaction将自己compact掉
-    //if(predict_ == INF) { //加了这个if可以屏蔽掉T1的predict
-
-    T1_rank = get_rank(level, file, v, compaction_);
-
-    int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-    int lower_level = level - 1;
-    // if(lower_level != -1) 
-    //   T1 += get_offset(lower_level);
-    if(T1 < predict_) {
-      predict_ = T1;
-      predict_type_ = 0;
+    //T1: current_level_compaction
+    if(compact_level[level] != 0) {
+      T1_rank = get_rank(level, file, v, compaction_);
+      int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
+      printf("T1 Prediction number=%ld T1=%d\n", file.fnumber, T1);
+      if(T1 < predict_) {
+        predict_ = T1;
+        predict_type_ = 0;
+      }
     }
-
+    //T3: use average lifetime
+    if(predict_ == INF) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
+      int T3 = get_ave_time(level); ///no way to predict the future compaction;
+      printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
+      if(T3 < predict_) {
+        predict_ = T3;
+        predict_type_ = 1;
+      }
+    }
   }
 
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
@@ -6414,13 +6263,6 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       int level_file_number = vstorage->NumLevelFiles(l);
       printf("level %d files num:%d: ", l, level_file_number);
        level_file_num[level + l] = level_file_number; //level
-      // std::vector<FileMetaData*> level_file = vstorage->LevelFiles(l);
-      // for(int i = 0; i < level_file_number; i++) {
-      //   FileMetaData *tmp = level_file[i];
-      //   std::cout << "["<< tmp->smallest.user_key().ToString()
-      //             << "," << tmp->largest.user_key().ToString()
-      //             << "]";
-      // }
       puts("");
     }
   }
