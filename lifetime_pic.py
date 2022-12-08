@@ -122,9 +122,9 @@ for l in range(0, 6): #each level
     if(len(data0_list_miss) != 0):
         plt.hist(data0_list_miss, bins=20, color="orange")
         plt.show()
-    if(len(datan1_list) != 0):
-        plt.hist(datan1_list, bins=20, color="red")
-        plt.show()
+    # if(len(datan1_list) != 0):
+    #     plt.hist(datan1_list, bins=20, color="red")
+    #     plt.show()
     # if(len(datan1_list_miss) != 0):
     #     plt.hist(datan1_list_miss, bins=20, color="pink")
     #     plt.show()
@@ -135,3 +135,5 @@ for l in range(0, 6): #each level
     #     plt.hist(data1_list_miss, bins=20, color="brown")
     #     plt.show()
 
+
+#4 [0-9]* 0 [0-9]* 0

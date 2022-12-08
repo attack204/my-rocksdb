@@ -28,10 +28,9 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   int predict_type;
   int rank;
   const int output_level = GetCompaction()->output_level();
-
+  printf("CompactionOutputs::Finish number=%ld get_clock=%d output_level=%d start_level=%d num_input_level=%ld\n", meta->fnumber, get_clock(), output_level, GetCompaction()->start_level(), GetCompaction()->num_input_levels());
   get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), GetCompaction(), predict, predict_type, rank);
 
-  printf("meta->fname=%s get_clock=%d\n", meta->fname.c_str(), get_clock());
   fs_->SetFileLifetime(meta->fname, predict + get_clock(), get_clock(), 0);
 
   if(!update_input_file_lifetime) {

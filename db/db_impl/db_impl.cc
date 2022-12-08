@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <queue>
 
 #include "db/arena_wrapped_db_iter.h"
 #include "db/builder.h"
@@ -5874,9 +5875,13 @@ int flush_num, compaction_num;
 const int FlushLevel = 2;
 const int CompactLevel = 6;
 const int INF = 1e9;
+const int AVERAGE_LIFETIME_THRESHOLD = 1;
+std::vector<int> compaction_level_list;
 int flush_level[LEVEL]; //每个level被Flush的次数
 int compact_level[LEVEL]; //每个level被compact的次数
 uint64_t compact_level_lifetime[LEVEL]; //被compact的SST file的总的lifetime
+std::queue<int> recent_level_lifetime_queue[LEVEL];
+uint64_t recent_level_lifetime[LEVEL];
 uint32_t correct_predict_time[LEVEL]; //进行了预测的SST file中正确预测的文件数量
 uint32_t compacted_number[LEVEL]; //进行了预测的SST file中被合并的文件数量
 uint32_t level_file_num[LEVEL];
@@ -5897,6 +5902,18 @@ void add_level_file_num(int level) {
 int get_ave_time(int level) {
   if(compacted_number[level] <= 0) return 0;
   return compact_level_lifetime[level] / compacted_number[level];
+}
+
+void update_average_lifetime(int level, int lifetime) {
+  recent_level_lifetime_queue[level].push(lifetime);
+  recent_level_lifetime[level] += lifetime;
+  if(recent_level_lifetime_queue[level].size() > AVERAGE_LIFETIME_THRESHOLD) {
+    recent_level_lifetime[level] -= recent_level_lifetime_queue[level].front();
+    recent_level_lifetime_queue[level].pop();
+  }
+}
+int get_recent_average_lifetime(int level) {
+  return recent_level_lifetime[level] / recent_level_lifetime_queue[level].size();
 }
 double get_predict_rate(int level) {
   if(compacted_number[level] <= 0) return 0;
@@ -5994,6 +6011,7 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
 
 
 void update_factor_predict(int level) {
+  compaction_level_list.emplace_back(level);
   if(last_compact[level] != 0 && (get_clock() - last_compact[level] > level_round[level])) {
     level_round[level] = get_clock() - last_compact[level];
     star_time[level] = get_clock();
@@ -6008,6 +6026,7 @@ void add_calc(int level, int lifetime, int predict_lifetime, int type, int real_
   compacted_number[level]++;
   correct_predict_time[level] += (abs(lifetime - predict_lifetime) <= PREDICT_THRESHOLD);
   compact_level_lifetime[level] += lifetime;
+  update_average_lifetime(level, lifetime);
   life_profiling[level].push_back(life_meta(type, lifetime, predict_lifetime, real_type, fnumber, time_clock));
 }
 
@@ -6109,7 +6128,7 @@ void SortFileByRoundRobin(const InternalKeyComparator& icmp,
 
 //获取在满足largestKey > cp的前提下，有多少比这个file的LargetKey小
 int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* compaction_) {
-  int BEGIN_LEVEL_NUM = (level == 0 ? 1 : 5);
+  int BEGIN_LEVEL_NUM = (level == 0 ? 1 : 4);
   int result = -1;
 
   VersionStorageInfo* vstorage_t = v->storage_info();
@@ -6154,6 +6173,17 @@ int get_rank(int level, const FileMetaData &file, Version *v, const Compaction* 
   }
   printf("GetRankFinished: level=%d number=%ld rank=%d level_size=%ld BEGIN_LEVEL_NUM=%d\n", level, file.fnumber, result, temp.size(), BEGIN_LEVEL_NUM);
   return result / BEGIN_LEVEL_NUM;;
+}
+
+bool query_is_compacting(int level) {
+  if(!compact_level[level]) return 0;
+  int last = compaction_level_list.size() - 1;
+  for(int i = last; i >= std::max(0, last - CYCLE * 3); i--) {
+    if(compaction_level_list[i] == level)
+      return 1;
+  }
+  return 0;
+  
 }
 
 //pre_time是之前的层所消耗的时间
@@ -6220,7 +6250,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
 
     //T1: current_level_compaction
-    if(compact_level[level] != 0) {
+    if(query_is_compacting(level)) {
       T1_rank = get_rank(level, file, v, compaction_);
       int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
       printf("T1 Prediction number=%ld T1=%d\n", file.fnumber, T1);
@@ -6230,8 +6260,8 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
       }
     }
     //T3: use average lifetime
-    if(predict_ == INF) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
-      int T3 = get_ave_time(level); ///no way to predict the future compaction;
+    if(predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
+      int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
       printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
       if(T3 < predict_) {
         predict_ = T3;
