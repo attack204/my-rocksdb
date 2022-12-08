@@ -5913,6 +5913,7 @@ void update_average_lifetime(int level, int lifetime) {
   }
 }
 int get_recent_average_lifetime(int level) {
+  if(recent_level_lifetime_queue[level].size() == 0) return 0;
   return recent_level_lifetime[level] / recent_level_lifetime_queue[level].size();
 }
 double get_predict_rate(int level) {
