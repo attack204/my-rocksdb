@@ -5977,7 +5977,7 @@ void all_profiling_print() {
   for(int i = 0; i <= CompactLevel; i++) {;
     for(auto &x: life_profiling[i]) {
      //   int diff_time = x.predict_lifetime - x.lifetime;
-        fprintf(fp, "%d %d %d %d %d %ld %d\n", i, x.predict_lifetime, x.type, x.lifetime, x.real_type, x.fnumber, x.time_clock);
+        fprintf(fp, "%d %d %d %d %d %ld %d %d\n", i, x.predict_lifetime, x.type, x.lifetime, x.real_type, x.fnumber, x.time_clock, level_file_num[i]);
     }
   }
   fclose(fp);

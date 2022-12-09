@@ -7,39 +7,7 @@ type_list = []
 lifetime_list = []
 predict_list = []
 real_type = []
-kind_correct = {
-    "0": 0,
-    "-1": 0,
-    "1": 0,
-    "2": 0,
-    "-2": 0,
-    "-3": 0,
-    "-4": 0,
-    "-5": 0,
-    "-6": 0
-}
-kind_num = {
-    "0": 0,
-    "-1": 0,
-    "1": 0,
-    "2": 0,
-    "-2": 0,
-    "-3": 0,
-    "-4": 0,
-    "-5": 0,
-    "-6": 0
-}
-kind_ave = {
-    "0": 0,
-    "-1": 0,
-    "1": 0,
-    "2": 0,
-    "-2": 0,
-    "-3": 0,
-    "-4": 0,
-    "-5": 0,
-    "-6": 0
-}
+level_number = []
 
 for line in open("lifetime.out"):
     #print(line.split(' '))
@@ -48,6 +16,7 @@ for line in open("lifetime.out"):
     type_list.append(int(line.split(' ')[2]))
     lifetime_list.append(int(line.split(' ')[3]))
     real_type.append(int(line.split(' ')[4]))
+    level_number.append(int(line.split(' ')[7]))
 
 for l in range(0, 6): #each level
     real_lifetime_list_0 = []
@@ -58,6 +27,7 @@ for l in range(0, 6): #each level
     tot = 0
     cnt0 = 0
     cntn1 = 0
+    num = 0
     for i in range(0, len(x_list)):
         if x_list[i] == l:
             if real_type[i] == 0:
@@ -70,10 +40,12 @@ for l in range(0, 6): #each level
                 sum1 += lifetime_list[i]
             sum += lifetime_list[i]
             tot += 1
+            if level_number[i] > num:
+                num = level_number[i]
     d =  0 if tot == 0 else sum / tot
     d1 = 0 if cnt0 == 0 else sum0 / cnt0
     d2 = 0 if cntn1 == 0 else sum1 / cntn1
-    print("level=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, d, d1, d2, cnt0, cntn1))
+    print("level=%d num=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, num, d, d1, d2, cnt0, cntn1))
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=20, color="yellow")
         plt.show()
