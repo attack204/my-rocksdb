@@ -53,6 +53,8 @@ for l in range(0, 6): #each level
     real_lifetime_list_0 = []
     real_lifetime_list_n1 = []
     sum = 0
+    sum0 = 0
+    sum1 = 0
     tot = 0
     cnt0 = 0
     cntn1 = 0
@@ -61,12 +63,14 @@ for l in range(0, 6): #each level
             if real_type[i] == 0:
                 real_lifetime_list_0.append(lifetime_list[i])
                 cnt0 += 1
+                sum0 += lifetime_list[i]
             else:
                 real_lifetime_list_n1.append(lifetime_list[i])
                 cntn1 += 1
+                sum1 += lifetime_list[i]
             sum += lifetime_list[i]
             tot += 1
-    print("level=%d average lifetime=%d cnt0=%d cntn1=%d" % (l, sum / tot, cnt0, cntn1))
+    print("level=%d all_ave ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, sum / tot, sum0 / cnt0, sum1 / cnt1, cnt0, cntn1))
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=20, color="yellow")
         plt.show()
