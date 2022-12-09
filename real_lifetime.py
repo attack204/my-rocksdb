@@ -70,7 +70,10 @@ for l in range(0, 6): #each level
                 sum1 += lifetime_list[i]
             sum += lifetime_list[i]
             tot += 1
-    print("level=%d all_ave ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, sum / tot, sum0 / cnt0, sum1 / cnt1, cnt0, cntn1))
+    d =  0 if tot == 0 else sum / tot
+    d1 = 0 if cnt0 == 0 else sum0 / cnt0
+    d2 = 0 if cntn1 == 0 else sum1 / cntn1
+    print("level=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, d, d1, d2, cnt0, cntn1))
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=20, color="yellow")
         plt.show()
