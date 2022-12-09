@@ -51,9 +51,14 @@ for line in open("lifetime.out"):
 
 for l in range(0, 6): #each level
     real_lifetime_list = []
+    sum = 0
+    tot = 0
     for i in range(0, len(x_list)):
         if x_list[i] == l:
             real_lifetime_list.append(lifetime_list[i])
+            sum += lifetime_list[i]
+            tot += 1
+    print("level=%d average lifetime=%d" % (l, sum / tot))
     if(len(real_lifetime_list) != 0):
         plt.hist(real_lifetime_list, bins=20, color="yellow")
         plt.show()
