@@ -5912,7 +5912,7 @@ void update_average_lifetime(int level, int lifetime) {
   }
   if(recent_level_lifetime_queue[level].size() != 0 && 
      lifetime < (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size())) return ;
-  if(level == 5 && (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size() != 0)) {
+  if(level == 5 && recent_level_lifetime_queue[level].size() != 0) {
     printf("update_average_lifetime level=%d lifetime=%d threshold=%ld\n", level, lifetime, (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size()));
   }
   recent_level_lifetime_queue[level].push(lifetime);
