@@ -5907,6 +5907,7 @@ int get_ave_time(int level) {
 }
 
 void update_average_lifetime(int level, int lifetime) {
+  if(lifetime < recent_level_lifetime[level] / 3) return ;
   recent_level_lifetime_queue[level].push(lifetime);
   recent_level_lifetime[level] += lifetime;
   if(recent_level_lifetime_queue[level].size() > AVERAGE_LIFETIME_THRESHOLD) {
@@ -6049,7 +6050,7 @@ void print_compaction(Compaction *compaction, int level) {
 
       if(pre.find(number) != pre.end()) {
         int lifetime = get_clock() - pre[number];
-        printf(" real_time=%d predict_time=%d predict_deleted_time=%d predict_type=%d compaction_type=%ld level_file_num=%d", lifetime, predict[number], deleted_time[number], predict_type[number], i, level_file_num[level + i]);
+        printf(" real_time=%d predict_time=%d predict_deleted_time=%d predict_type=%d level_file_num=%d", lifetime, predict[number], deleted_time[number], predict_type[number], level_file_num[level + i]);
         number_life[number] = lifetime;
         number_level[number] = level;
         add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number], i, number, get_clock());
@@ -6281,7 +6282,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
         T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
         printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
       } else {
-        T1 = get_ave_time(level + 1) + get_ave_time(level);
+        T1 = get_recent_average_lifetime(level + 1) + get_recent_average_lifetime(level);
         blockT3 = 1;
         printf("T1 TrivialMove Prediction number=%ld T1=%d\n", file.fnumber, T1);
       }
