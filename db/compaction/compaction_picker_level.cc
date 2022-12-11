@@ -19,6 +19,8 @@
 
 namespace ROCKSDB_NAMESPACE {
 
+extern int get_clock();
+
 bool LevelCompactionPicker::NeedsCompaction(
     const VersionStorageInfo* vstorage) const {
   if (!vstorage->ExpiredTtlFiles().empty()) {
@@ -634,6 +636,7 @@ bool LevelCompactionBuilder::TryExtendNonL0TrivialMove(int start_index) {
   if (start_level_inputs_.size() == 1 &&
       (ioptions_.db_paths.empty() || ioptions_.db_paths.size() == 1) &&
       (mutable_cf_options_.compression_per_level.empty())) {
+    
     // Only file of `index`, and it is likely a trivial move. Try to
     // expand if it is still a trivial move, but not beyond
     // max_compaction_bytes or 4 files, so that we don't create too
@@ -679,6 +682,12 @@ bool LevelCompactionBuilder::TryExtendNonL0TrivialMove(int start_index) {
       }
       start_level_inputs_.files.push_back(next_file);
     }
+    
+    printf("TryExtendNonL0TrivialMove called clock=%d start_level=%d start_level_input_size=%ld output_level=%d [", get_clock(), start_level_, start_level_inputs_.size(), output_level_);
+    for(auto &x: start_level_inputs_.files) {
+      printf("%ld ", x->fd.GetNumber());
+    }
+    printf("] \n");
     return start_level_inputs_.size() > 1;
   }
   return false;

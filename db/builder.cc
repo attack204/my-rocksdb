@@ -44,6 +44,7 @@
 namespace ROCKSDB_NAMESPACE {
 
 extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
+extern void set_deleted_time(int fnumber, int clock);
 extern int get_clock();
 
 class TableFactory;
@@ -164,7 +165,7 @@ Status BuildTable(
       const int output_level = 0;
 
       get_predict(output_level, *meta, versions->GetColumnFamilySet()->GetDefault()->current(), nullptr, predict, predict_type, rank);
-
+      set_deleted_time(meta->fnumber, predict + get_clock());
       printf("meta->fname=%s get_clock=%d lifetime=%d\n", fname.c_str(), get_clock(), predict + get_clock());
       fs->SetFileLifetime(fname, predict + get_clock(), get_clock(), 0);
 

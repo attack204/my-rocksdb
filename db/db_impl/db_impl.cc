@@ -125,6 +125,7 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
 void all_profiling_print();
 void profiling_print();
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
+void set_deleted_time(int fnumber, int clock);
 int get_clock();
 const std::string kDefaultColumnFamilyName("default");
 const std::string kPersistentStatsColumnFamilyName(
@@ -5891,6 +5892,7 @@ std::map<uint64_t, int> predict; //key: file_number value: 预测的lifetime的�
 std::map<uint64_t, int> predict_type;
 std::map<uint64_t, int> number_life;
 std::map<uint64_t, int> number_level;
+std::map<uint64_t, int> deleted_time;
 std::map<uint64_t, int> rank_;
 std::vector<int> time_level; //Flush/Compaction的level按时间递增的分布
 int get_clock() {
@@ -5935,14 +5937,14 @@ int CYCLE = 9;
 
 class life_meta {
 public:
-  life_meta(int type_, int lifetime_, int predict_lifetime_, int real_type_, uint64_t fnumber_, int time_clock_) {
+    life_meta(int type_, int lifetime_, int predict_lifetime_, int real_type_, uint64_t fnumber_, int time_clock_) {
     type = type_;
     lifetime = lifetime_;
     predict_lifetime = predict_lifetime_;
     real_type = real_type_ == 0 ? 0 : -1;
     fnumber = fnumber_;
     time_clock = time_clock_;
-
+  //  printf("number=%ld predict_time=%d\n", fnumber, predict_lifetime_);
   }
   int type; //predict compacted reason
   int lifetime;
@@ -5967,17 +5969,12 @@ void profiling_print() {
 }
 
 void all_profiling_print() {
-  
-  FILE * fp_ = fopen("number_life.out", "a");
-  for(auto &x: number_life) {
-    fprintf(fp_, "number=%lu level=%d lifetime=%d predict=%d predict_type=%d\n", x.first, number_level[x.first], x.second, predict[x.first], predict_type[x.first]);
-  }
-  fclose(fp_);
   FILE * fp = fopen("lifetime.out", "a");
   for(int i = 0; i <= CompactLevel; i++) {;
     for(auto &x: life_profiling[i]) {
      //   int diff_time = x.predict_lifetime - x.lifetime;
-        fprintf(fp, "%d %d %d %d %d %ld %d %d\n", i, x.predict_lifetime, x.type, x.lifetime, x.real_type, x.fnumber, x.time_clock, level_file_num[i]);
+      fprintf(fp, "%d %d %d %d %d %ld %d %d\n", i, x.predict_lifetime, x.type, x.lifetime, x.real_type, x.fnumber, x.time_clock, level_file_num[i]);
+      
     }
   }
   fclose(fp);
@@ -5985,9 +5982,11 @@ void all_profiling_print() {
 
 struct timeval time;
 uint64_t prev_time;
+//after flush or compaction
+//print compaction input/output file information
+std::mutex print_mutex;  
 void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
-
-   
+  const std::lock_guard<std::mutex> lock(print_mutex);
   if(log_type == FLUSH) {
     flush_num++;
     flush_level[level]++;
@@ -6050,7 +6049,7 @@ void print_compaction(Compaction *compaction, int level) {
 
       if(pre.find(number) != pre.end()) {
         int lifetime = get_clock() - pre[number];
-        printf(" lifetime=%d predict_time=%d predict_type=%d compaction_type=%ld level_file_num=%d", lifetime, predict[number], predict_type[number], i,level_file_num[compaction->level() + i]);
+        printf(" real_time=%d predict_time=%d predict_deleted_time=%d predict_type=%d compaction_type=%ld level_file_num=%d", lifetime, predict[number], deleted_time[number], predict_type[number], i, level_file_num[level + i]);
         number_life[number] = lifetime;
         number_level[number] = level;
         add_calc(compaction->level() + i, lifetime, predict[number], predict_type[number], i, number, get_clock());
@@ -6233,8 +6232,30 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
   }
 }
 
+bool has_overlap(const FileMetaData &file, int target_level, Version *v) {
+  const InternalKey* begin = &file.smallest;
+  const InternalKey* end   = &file.largest;
+  auto vstorage = v->storage_info();
+  auto user_cmp = vstorage->InternalComparator()->user_comparator();
+  std::vector<FileMetaData*> level_file = vstorage->LevelFiles(target_level);
+  for(int i = 0; i < vstorage->NumLevelFiles(target_level); i++) {
+    FileMetaData *f = level_file[i];
+    const Slice file_start = f->smallest.user_key();
+    const Slice file_end = f->largest.user_key();
+    if (begin != nullptr && user_cmp->CompareWithoutTimestamp(file_end, begin->user_key()) < 0) {
+    } else if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->user_key()) > 0) {
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
 
-
+void set_deleted_time(int fnumber, int clock) {
+  if(deleted_time.find(fnumber) == deleted_time.end()) {
+    deleted_time[fnumber] = clock;
+  }
+}
 
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
 //  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
@@ -6250,18 +6271,29 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
 
+
+    bool blockT3 = 0;
     //T1: current_level_compaction
-    if(query_is_compacting(level)) {
-      T1_rank = get_rank(level, file, v, compaction_);
-      int T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-      printf("T1 Prediction number=%ld T1=%d\n", file.fnumber, T1);
+    if(level + 1 <= CompactLevel && query_is_compacting(level)) {
+      int T1 = 1e9;
+      if(has_overlap(file, level + 1, v)) {
+        T1_rank = get_rank(level, file, v, compaction_);
+        T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
+        printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
+      } else {
+        T1 = get_ave_time(level + 1) + get_ave_time(level);
+        blockT3 = 1;
+        printf("T1 TrivialMove Prediction number=%ld T1=%d\n", file.fnumber, T1);
+      }
       if(T1 < predict_) {
         predict_ = T1;
         predict_type_ = 0;
       }
+      
     }
     //T3: use average lifetime
-    if(predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
+    if((!blockT3) && (predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100)) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
+    
       int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
       printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
       if(T3 < predict_) {
@@ -6275,6 +6307,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
   uint64_t number = get_number(file);
   rank_[number] = T1_rank;
   predict[number] = predict_;
+  printf("get_predict finish: number=%ld clock=%d level=%d predict_time=%d\n", number, get_clock(), level, predict[number]);
   predict_type[number] = predict_type_;
   if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
     pre[number] = get_clock();
@@ -6282,6 +6315,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 }
 
 //flush/compact的最后后调用此函数, 此函数可以调用最新的Version信息
+//we know the output file information at this moment
 void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction) {
 
   puts("AllFiles");
@@ -6292,8 +6326,13 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
   if(vstorage != nullptr) {
     for (int l = 0; l < vstorage->num_levels(); ++l) {
       int level_file_number = vstorage->NumLevelFiles(l);
-      printf("level %d files num:%d: ", l, level_file_number);
-       level_file_num[level + l] = level_file_number; //level
+      printf("level %d files num:%d: [", l, level_file_number);
+      std::vector<FileMetaData*> level_file = vstorage->LevelFiles(l);
+      for(auto &x: level_file) {
+        printf("%ld ", get_number(*x));
+      }
+      printf("]");
+      level_file_num[level + l] = level_file_number; //level
       puts("");
     }
   }
@@ -6301,9 +6340,9 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
   puts("Input Files");
   if(compaction != nullptr) {
     for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
-        printf("files_L=%d ", compaction->level(i));
+        printf("level=%d\n", compaction->level(i));
         for (auto f : *compaction->inputs(i)) { 
-            printf("input_id=%ld fname=%s ", f->fd.GetNumber(), f->fname.c_str());
+            printf("number=%ld fname=%s\n", f->fd.GetNumber(), f->fname.c_str());
         }
         puts("");
     }
@@ -6320,10 +6359,9 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
       if(rank_.find(number) != rank_.end()) {
         rank = rank_[number];
       }
-      printf("new_id=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d ", number, level, rank, get_clock(), predict[number], predict_type[number]);  
-      std::cout << "["<< y.smallest.user_key().ToString()
-                << "," << y.largest.user_key().ToString()
-                << "]" << '\n';
+      printf("number=%lu level=%d rank=%d clock=%d predict_lifetime=%d predict_type=%d fname=%s\n", 
+            number, compaction->output_level(), rank, get_clock(), predict[number], predict_type[number], y.fname.c_str());  
+
     }
   }
 

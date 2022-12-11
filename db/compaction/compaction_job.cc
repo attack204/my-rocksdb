@@ -69,6 +69,7 @@ enum LOG_TYPE {
 extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c);
 extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
 extern void SetRocksIO(uint64_t rocks_io);
+extern int get_clock();
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
   switch (compaction_reason) {
     case CompactionReason::kUnknown:
@@ -592,6 +593,8 @@ Status CompactionJob::Run() {
   const size_t num_threads = compact_->sub_compact_states.size(); //线程数量
   assert(num_threads > 0);
   const uint64_t start_micros = db_options_.clock->NowMicros();
+
+  printf("CompactionJob::Run clock=%d level=%d\n" , get_clock(), compact_->compaction->start_level());
 
 
   /*

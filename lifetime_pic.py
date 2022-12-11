@@ -113,8 +113,8 @@ for l in range(0, 6): #each level
     for key1 in kind_num:
         for key2 in kind_num[key1]:
             if(kind_num[key1][key2] != 0):
-                print("T%s Real_Type=%s Accuracy=%.3lf AveLifetime=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
-    if(l != 4): 
+                print("T%s S%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
+    if((l != 4)): 
         continue
     if(len(data0_list) != 0):
         plt.hist(data0_list, bins=20, color="yellow")
@@ -122,18 +122,18 @@ for l in range(0, 6): #each level
     if(len(data0_list_miss) != 0):
         plt.hist(data0_list_miss, bins=20, color="orange")
         plt.show()
-    # if(len(datan1_list) != 0):
-    #     plt.hist(datan1_list, bins=20, color="red")
-    #     plt.show()
-    # if(len(datan1_list_miss) != 0):
-    #     plt.hist(datan1_list_miss, bins=20, color="pink")
-    #     plt.show()
+    if(len(datan1_list) != 0):
+        plt.hist(datan1_list, bins=20, color="red")
+        plt.show()
+    if(len(datan1_list_miss) != 0):
+        plt.hist(datan1_list_miss, bins=20, color="pink")
+        plt.show()
     if(len(data1_list) != 0):
         plt.hist(data1_list, bins=20, color="black")
         plt.show()
-    # if((len(data1_list_miss) != 0)):
-    #     plt.hist(data1_list_miss, bins=20, color="brown")
-    #     plt.show()
+    if((len(data1_list_miss) != 0)):
+        plt.hist(data1_list_miss, bins=20, color="brown")
+        plt.show()
 
 
 #4 [0-9]* 0 [0-9]* -1
