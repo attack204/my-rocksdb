@@ -5907,7 +5907,7 @@ int get_ave_time(int level) {
 }
 
 void update_average_lifetime(int level, int lifetime) {
-  if(lifetime < recent_level_lifetime[level] / 3) return ;
+  if(lifetime < (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size())  / 3) return ;
   recent_level_lifetime_queue[level].push(lifetime);
   recent_level_lifetime[level] += lifetime;
   if(recent_level_lifetime_queue[level].size() > AVERAGE_LIFETIME_THRESHOLD) {
