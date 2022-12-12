@@ -6285,8 +6285,8 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
   predict_ = INF;
   int T1_rank = 0;
-  if(strstr(get_fname(file.fd.GetNumber()).c_str(), "log") != nullptr) {
-    predict_ = 0;
+  if(strstr(get_fname(file.fd.GetNumber()).c_str(), ".log") != nullptr) {
+    predict_ = 1;
     predict_type_ = 0;
   }
   else if(level == 0) {
