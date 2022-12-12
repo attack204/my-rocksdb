@@ -5894,6 +5894,7 @@ std::map<uint64_t, int> number_life;
 std::map<uint64_t, int> number_level;
 std::map<uint64_t, int> deleted_time;
 std::map<uint64_t, int> rank_;
+std::map<uint64_t, std::string> id_to_name;
 std::vector<int> time_level; //Flush/Compaction的level按时间递增的分布
 int get_clock() {
   return flush_num + compaction_num;
@@ -5906,6 +5907,18 @@ int get_ave_time(int level) {
   return compact_level_lifetime[level] / compacted_number[level];
 }
 
+void update_fname(uint64_t id, std::string name) {
+  id_to_name[id] = name;
+}
+std::string get_fname(uint64_t id) {
+  if(id_to_name.find(id) == id_to_name.end()) {
+    printf("ERROR: can't find fname\n");
+    return "/";
+  } else {
+    return id_to_name[id];
+  }
+  
+}
 void update_average_lifetime(int level, int lifetime) {
   // if(level == 5) {
   //   printf("update_average_lifetime level=%d lifetime=%d\n", level, lifetime);
@@ -6350,7 +6363,7 @@ void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vec
     for (size_t i = 0; i < compaction->num_input_levels(); ++i) {
         printf("level=%d\n", compaction->level(i));
         for (auto f : *compaction->inputs(i)) { 
-            printf("number=%ld fname=%s\n", f->fd.GetNumber(), f->fname.c_str());
+            printf("number=%ld fname=%s\n", f->fd.GetNumber(), get_fname(f->fd.GetNumber()).c_str());
         }
         puts("");
     }

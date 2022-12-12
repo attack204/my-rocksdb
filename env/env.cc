@@ -406,7 +406,7 @@ class LegacyFileSystemWrapper : public FileSystem {
     }
     return status_to_io_status(std::move(s));
   }
-  IOStatus SetFileLifetime(std::string& fname, 
+  IOStatus SetFileLifetime(std::string fname, 
                                    uint64_t lifetime, int clock, bool flag) override {
     Status s = target_->SetFileLifetime(fname, lifetime, clock, flag);
     return status_to_io_status(std::move(s));

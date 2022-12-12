@@ -45,6 +45,8 @@ namespace ROCKSDB_NAMESPACE {
 
 extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
 extern void set_deleted_time(int fnumber, int clock);
+extern void update_fname(uint64_t id, std::string name);
+extern std::string get_fname(uint64_t id);
 extern int get_clock();
 
 class TableFactory;
@@ -107,6 +109,7 @@ Status BuildTable(
 
   std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
                                     meta->fd.GetPathId());
+  update_fname(meta->fd.GetNumber(), fname);
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;

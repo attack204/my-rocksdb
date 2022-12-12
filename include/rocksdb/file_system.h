@@ -365,7 +365,7 @@ class FileSystem : public Customizable {
                                    const FileOptions& file_opts,
                                    std::unique_ptr<FSWritableFile>* result,
                                    IODebugContext* dbg) = 0;
-  virtual IOStatus SetFileLifetime(std::string& fname, 
+  virtual IOStatus SetFileLifetime(std::string fname, 
                                    uint64_t lifetime, int clock, bool flag) = 0;
   // Create an object that writes to a file with the specified name.
   // `FSWritableFile::Append()`s will append after any existing content.  If the
@@ -1343,7 +1343,7 @@ class FileSystemWrapper : public FileSystem {
                            IODebugContext* dbg) override {
     return target_->NewWritableFile(f, file_opts, r, dbg);
   }
-  IOStatus SetFileLifetime(std::string& fname, 
+  IOStatus SetFileLifetime(std::string fname, 
                                    uint64_t lifetime, int clock, bool flag) override {
     return target_->SetFileLifetime(fname, lifetime, clock, flag);
   }

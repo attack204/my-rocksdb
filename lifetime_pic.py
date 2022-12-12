@@ -22,7 +22,7 @@ for line in open("lifetime.out"):
     lifetime_list.append(int(line.split(' ')[3]))
     real_type.append(int(line.split(' ')[4]))
 
-for l in range(0, 6): #each level
+for l in range(0, 7): #each level
     kind_correct = {
         "0": {"0": 0, "-1": 0},
         "-1": {"0": 0, "-1": 0},
@@ -114,7 +114,7 @@ for l in range(0, 6): #each level
         for key2 in kind_num[key1]:
             if(kind_num[key1][key2] != 0):
                 print("T%s S%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
-    if((l != 4) and (l != 5)): 
+    if((l != 4) and (l != 5) and (l != 6)): 
         continue
     if(len(data0_list) != 0):
         plt.hist(data0_list, bins=20, color="yellow")
