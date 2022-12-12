@@ -6282,9 +6282,14 @@ void set_deleted_time(int fnumber, int clock) {
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
 //  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
   printf("get_predict begin: number=%ld clock=%d level=%d compact_level_number=%d\n", file.fnumber, get_clock(), level, compact_level[level]);
+
   predict_ = INF;
   int T1_rank = 0;
-  if(level == 0) {
+  if(strstr(get_fname(file.fd.GetNumber()).c_str(), "log") != nullptr) {
+    predict_ = 0;
+    predict_type_ = 0;
+  }
+  else if(level == 0) {
     predict_ = get_rank(level, file, v, compaction_);
     predict_type_ = 0;
   } else {
