@@ -70,6 +70,7 @@ extern void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c
 extern void after_flush_or_compaction(VersionStorageInfo *vstorage, int level, std::vector<const CompactionOutputs::Output*> files_output, ColumnFamilyData* cfd, Compaction* const compaction);
 extern void SetRocksIO(uint64_t rocks_io);
 extern int get_clock();
+extern void update_fname(uint64_t id, std::string name);
 const char* GetCompactionReasonString(CompactionReason compaction_reason) {
   switch (compaction_reason) {
     case CompactionReason::kUnknown:
@@ -1755,6 +1756,7 @@ Status CompactionJob::OpenCompactionOutputFile(SubcompactionState* sub_compact,
   // no need to lock because VersionSet::next_file_number_ is atomic
   uint64_t file_number = versions_->NewFileNumber();
   std::string fname = GetTableFileName(file_number);
+  update_fname(file_number, fname);
   //printf("fname=%s", fname.c_str());
   // Fire events.
   ColumnFamilyData* cfd = sub_compact->compaction->column_family_data();

@@ -109,7 +109,6 @@ Status BuildTable(
 
   std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
                                     meta->fd.GetPathId());
-  update_fname(meta->fd.GetNumber(), fname);
   std::vector<std::string> blob_file_paths;
   std::string file_checksum = kUnknownFileChecksum;
   std::string file_checksum_func_name = kUnknownFileChecksumFuncName;
@@ -158,6 +157,7 @@ Status BuildTable(
       FileOptions tmp_file_options = file_options;
       tmp_file_options.lifetime = 100;
 
+      update_fname(meta->fd.GetNumber(), fname);
       //在这里写入
       IOStatus io_s = NewWritableFile(fs, fname, &file, tmp_file_options);
 

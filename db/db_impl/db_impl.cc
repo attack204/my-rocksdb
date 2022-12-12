@@ -5908,11 +5908,12 @@ int get_ave_time(int level) {
 }
 
 void update_fname(uint64_t id, std::string name) {
+  printf("update_fname id=%ld name=%s", id, name.c_str());
   id_to_name[id] = name;
 }
 std::string get_fname(uint64_t id) {
   if(id_to_name.find(id) == id_to_name.end()) {
-    printf("ERROR: can't find fname\n");
+    printf("ERROR: can't find fname id=%ld\n", id);
     return "/";
   } else {
     return id_to_name[id];
