@@ -5877,6 +5877,8 @@ const int FlushLevel = 2;
 const int CompactLevel = 6;
 const int INF = 1e9;
 const int AVERAGE_LIFETIME_THRESHOLD = 1;
+double ans_wp;
+int ans_reset_num;
 std::vector<int> compaction_level_list;
 int flush_level[LEVEL]; //每个level被Flush的次数
 int compact_level[LEVEL]; //每个level被compact的次数
@@ -5981,7 +5983,7 @@ std::map<int, std::vector<life_meta> > life_profiling;
 //每50次Compact会调用此函数打印状态
 //printf profiling information
 void profiling_print() {
-  printf("Profiling\n");
+  printf("Profiling write_amp=%lf reset_num=%d\n", ans_wp, ans_reset_num);
   for(int i = 0; i <= FlushLevel; i++) {
     printf("FlushLevel %d=%d\n", i, flush_level[i]);
   }
@@ -6403,6 +6405,14 @@ void SetDBImpl(DBImpl *db) {
   //if(rocksdb_impl == nullptr) 
     rocksdb_impl = db;
 }
+
+void set_write_amplification(double wp) {
+  ans_wp = wp;
+}
+void set_reset_num(int reset_num) {
+  ans_reset_num = reset_num;
+}
+
 
 bool DoPreCompaction(std::vector<uint64_t> file_list) {
   printf("Recieve Compaction Request Time=%d\n", get_clock());
