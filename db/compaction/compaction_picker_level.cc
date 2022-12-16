@@ -709,9 +709,9 @@ bool LevelCompactionBuilder::PickFileToCompact() {
 
   assert(start_level_ >= 0);
 
-  if (TryPickL0TrivialMove()) {
-    return true;
-  }
+  // if (TryPickL0TrivialMove()) {
+  //   return true;
+  // }
 
   const std::vector<FileMetaData*>& level_files =
       vstorage_->LevelFiles(start_level_);
@@ -771,9 +771,9 @@ bool LevelCompactionBuilder::PickFileToCompact() {
     vstorage_->GetOverlappingInputs(output_level_, &smallest, &largest,
                                     &output_level_inputs.files);
     if (output_level_inputs.empty()) {
-      if (TryExtendNonL0TrivialMove(index)) {
-        break;
-      }
+      // if (TryExtendNonL0TrivialMove(index)) {
+      //   break;
+      // }
     } else {
       if (!compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
                                                       &output_level_inputs)) {

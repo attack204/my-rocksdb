@@ -6301,22 +6301,23 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
     bool blockT3 = 0;
     //T1: current_level_compaction
-    if(level + 1 <= CompactLevel && query_is_compacting(level)) {
+    if(level + 1 <= CompactLevel) {
       int T1 = 1e9;
-      if(has_overlap(file, level + 1, v)) {
+      //1. has_overlap with upper level or start compact => T0
+      //2. has no overlap, no matter start compact or not => trivial move
+      if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
         T1_rank = get_rank(level, file, v, compaction_);
         T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
         printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
-      } else {
-        T1 = get_recent_average_lifetime(level + 1) + get_recent_average_lifetime(level);
+      } else if (!has_overlap(file, level + 1, v) && level + 1 <= 5) {
+        T1 = get_recent_average_lifetime(level) + 850;
         blockT3 = 1;
-        printf("T1 TrivialMove Prediction number=%ld T1=%d\n", file.fnumber, T1);
+        printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
       }
       if(T1 < predict_) {
         predict_ = T1;
         predict_type_ = 0;
       }
-      
     }
     //T3: use average lifetime
     if((!blockT3) && (predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100)) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
