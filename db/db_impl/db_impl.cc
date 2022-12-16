@@ -5898,6 +5898,7 @@ std::map<uint64_t, int> deleted_time;
 std::map<uint64_t, int> rank_;
 std::map<uint64_t, std::string> id_to_name;
 std::vector<int> time_level; //Flush/Compaction的level按时间递增的分布
+//int global_clock;
 int get_clock() {
   return flush_num + compaction_num;
 }
@@ -6005,12 +6006,14 @@ void all_profiling_print() {
 }
 
 struct timeval time;
-uint64_t prev_time;
+uint64_t prev_time, prev_flush_time;
+int prev_type;
 //after flush or compaction
 //print compaction input/output file information
 std::mutex print_mutex;  
 void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   const std::lock_guard<std::mutex> lock(print_mutex);
+  //bool add = 1;
   if(log_type == FLUSH) {
     flush_num++;
     flush_level[level]++;
@@ -6020,16 +6023,25 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
     compact_level[level]++;
     time_level.push_back(level);
   }
+  printf("%10s flush_num=%d compaction_num=%d time=%d level=%d\n", s, flush_num, compaction_num, get_clock(), level);
+
+
+
+  gettimeofday(&time, NULL);
+  long long us = (time.tv_sec*1000 + time.tv_usec/1000);
+  if(prev_type != FLUSH && log_type == FLUSH) prev_flush_time = us;  
+  prev_type = log_type;
+
+  FILE * fp2 = fopen("clock.out", "a");
+  fprintf(fp2, "%lld %lld %d flush_num=%d compaction_num=%d  time=%d level=%d\n", us - prev_time, us - prev_flush_time, log_type, flush_num, compaction_num, get_clock(), level);
+  fclose(fp2);  
+  prev_time = us;
+
+
+  
   FILE * fp = fopen("level.out", "a");
   fprintf(fp, "%d %d\n", get_clock(), level);
   fclose(fp);
-  gettimeofday(&time, NULL);
-  long long us = (time.tv_sec*1000 + time.tv_usec/1000);
-
-  FILE * fp = fopen("clock.out", "a");
-  fprintf("%10llu %d flush_num=%d compaction_num=%d  time=%d level=%d\n", us - prev_time, log_type, flush_num, compaction_num get_clock(), level);
-  fclose(fp);  
-  prev_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
   }
@@ -6313,7 +6325,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
         T1_rank = get_rank(level, file, v, compaction_);
         T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
         printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
-      } else if (!has_overlap(file, level + 1, v) && level + 1 <= 5) {
+      } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
         T1 = get_recent_average_lifetime(level) + 850;
         blockT3 = 1;
         printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));

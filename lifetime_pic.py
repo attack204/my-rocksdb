@@ -22,6 +22,18 @@ for line in open("lifetime.out"):
     lifetime_list.append(int(line.split(' ')[3]))
     real_type.append(int(line.split(' ')[4]))
 
+
+ans_list = []
+real_distribution = []
+for i in range(0, len(x_list)):
+    ans_list.append(predict_list[i] - lifetime_list[i])
+    real_distribution.append(lifetime_list[i])
+
+plt.hist(ans_list, bins=100, color="green")
+plt.show()
+plt.hist(real_distribution, bins=100, color="red")
+plt.show()
+
 for l in range(0, 7): #each level
     kind_correct = {
         "0": {"0": 0, "-1": 0},
