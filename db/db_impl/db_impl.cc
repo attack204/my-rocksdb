@@ -6026,7 +6026,9 @@ void log_print(const char *s, LOG_TYPE log_type, int level, Compaction *c) {
   gettimeofday(&time, NULL);
   long long us = (time.tv_sec*1000 + time.tv_usec/1000);
 
-  printf("%10s flush_num=%d compaction_num=%d diff_time=%llu time=%d level=%d\n", s, flush_num, compaction_num, us - prev_time, get_clock(), level);
+  FILE * fp = fopen("clock.out", "a");
+  fprintf("%10llu %d flush_num=%d compaction_num=%d  time=%d level=%d\n", us - prev_time, log_type, flush_num, compaction_num get_clock(), level);
+  fclose(fp);  
   prev_time = us;
   if(log_type == COMPACTION) {
      print_compaction(c, level);
