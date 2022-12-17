@@ -5879,6 +5879,7 @@ const int INF = 1e9;
 const int AVERAGE_LIFETIME_THRESHOLD = 1;
 double ans_wp;
 int ans_reset_num;
+int ans_allocated_num;
 std::vector<int> compaction_level_list;
 int flush_level[LEVEL]; //每个level被Flush的次数
 int compact_level[LEVEL]; //每个level被compact的次数
@@ -5984,7 +5985,7 @@ std::map<int, std::vector<life_meta> > life_profiling;
 //每50次Compact会调用此函数打印状态
 //printf profiling information
 void profiling_print() {
-  printf("Profiling write_amp=%lf reset_num=%d\n", ans_wp, ans_reset_num);
+  printf("Profiling write_amp=%lf allocated_num=%d reset_num=%d\n", ans_wp, ans_allocated_num, ans_reset_num);
   for(int i = 0; i <= FlushLevel; i++) {
     printf("FlushLevel %d=%d\n", i, flush_level[i]);
   }
@@ -6265,7 +6266,7 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
         predict_ = T2 + pre_time;
         predict_type_ = deep;
       }
-      dfs(level - 1, deep - 1, file, v, compaction_, pre_time + T2, predict_, predict_type_, tmp_rank);
+     // dfs(level - 1, deep - 1, file, v, compaction_, pre_time + T2, predict_, predict_type_, tmp_rank);
     }
   }
 }
@@ -6316,35 +6317,45 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
 
     bool blockT3 = 0;
+
+    int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
+    if(!T3) T3 = get_recent_average_lifetime(level - 1);
+    printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
+    if(T3 < predict_) {
+      predict_ = T3;
+      predict_type_ = 1;
+    }
+
+
     //T1: current_level_compaction
-    if(level + 1 <= CompactLevel) {
-      int T1 = 1e9;
-      //1. has_overlap with upper level or start compact => T0
-      //2. has no overlap, no matter start compact or not => trivial move
-      if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
-        T1_rank = get_rank(level, file, v, compaction_);
-        T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-        printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
-      } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
-        T1 = get_recent_average_lifetime(level) + 850;
-        blockT3 = 1;
-        printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
-      }
-      if(T1 < predict_) {
-        predict_ = T1;
-        predict_type_ = 0;
-      }
-    }
-    //T3: use average lifetime
-    if((!blockT3) && (predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100)) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
+    // if(level + 1 <= CompactLevel) {
+    //   int T1 = 1e9;
+    //   //1. has_overlap with upper level or start compact => T0
+    //   //2. has no overlap, no matter start compact or not => trivial move
+    //   if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
+    //     T1_rank = get_rank(level, file, v, compaction_);
+    //     T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
+    //     printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
+    //   } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
+    //     T1 = get_recent_average_lifetime(level) + 850;
+    //     blockT3 = 1;
+    //     printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
+    //   }
+    //   if(T1 < predict_) {
+    //     predict_ = T1;
+    //     predict_type_ = 0;
+    //   }
+    // }
+    // //T3: use average lifetime
+    // if((!blockT3) && (predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100)) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
     
-      int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
-      printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
-      if(T3 < predict_) {
-        predict_ = T3;
-        predict_type_ = 1;
-      }
-    }
+    //   int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
+    //   printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
+    //   if(T3 < predict_) {
+    //     predict_ = T3;
+    //     predict_type_ = 1;
+    //   }
+    // }
   }
 
   if(predict_ == INF) predict_ = 1; //lifetime can't = 0
@@ -6425,6 +6436,9 @@ void set_write_amplification(double wp) {
 }
 void set_reset_num(int reset_num) {
   ans_reset_num = reset_num;
+}
+void set_allocated_num(int allocated_num) { 
+  ans_allocated_num = allocated_num;
 }
 
 
