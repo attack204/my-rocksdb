@@ -366,7 +366,7 @@ class FileSystem : public Customizable {
                                    std::unique_ptr<FSWritableFile>* result,
                                    IODebugContext* dbg) = 0;
   virtual IOStatus SetFileLifetime(std::string fname, 
-                                   uint64_t lifetime, int clock, bool flag) = 0;
+                                   uint64_t lifetime, int clock, bool flag, int level) = 0;
   // Create an object that writes to a file with the specified name.
   // `FSWritableFile::Append()`s will append after any existing content.  If the
   // file does not already exist, creates it.
@@ -1344,8 +1344,8 @@ class FileSystemWrapper : public FileSystem {
     return target_->NewWritableFile(f, file_opts, r, dbg);
   }
   IOStatus SetFileLifetime(std::string fname, 
-                                   uint64_t lifetime, int clock, bool flag) override {
-    return target_->SetFileLifetime(fname, lifetime, clock, flag);
+                                   uint64_t lifetime, int clock, bool flag, int level) override {
+    return target_->SetFileLifetime(fname, lifetime, clock, flag, level);
   }
   IOStatus ReopenWritableFile(const std::string& fname,
                               const FileOptions& file_opts,

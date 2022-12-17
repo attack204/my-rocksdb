@@ -46,8 +46,8 @@ class CompositeEnv : public Env {
                          const EnvOptions& options) override;
   
   Status SetFileLifetime(std::string fname, 
-                                   uint64_t lifetime, int clock, bool flag) {
-      return file_system_->SetFileLifetime(fname, lifetime, clock, flag);
+                                   uint64_t lifetime, int clock, bool flag, int level) {
+      return file_system_->SetFileLifetime(fname, lifetime, clock, flag, level);
   }
 
   Status ReopenWritableFile(const std::string& fname,

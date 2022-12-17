@@ -51,7 +51,7 @@ class MockFileSystem : public FileSystem {
                            const FileOptions& file_opts,
                            std::unique_ptr<FSWritableFile>* result,
                            IODebugContext* dbg) override;
-  IOStatus SetFileLifetime(std::string fname, uint64_t lifetime, int clock, bool flag) {
+  IOStatus SetFileLifetime(std::string fname, uint64_t lifetime, int clock, bool flag, int level) {
     //std::cout << fname << lifetime << '\n';
      return IOStatus::NotSupported("SetFileLifetime");
   }
