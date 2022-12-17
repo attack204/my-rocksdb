@@ -6289,6 +6289,23 @@ bool has_overlap(const FileMetaData &file, int target_level, Version *v) {
   }
   return false;
 }
+void get_overlap(const FileMetaData &file, int target_level, Version *v, std::vector<std::string> &overlap_list) {
+  const InternalKey* begin = &file.smallest;
+  const InternalKey* end   = &file.largest;
+  auto vstorage = v->storage_info();
+  auto user_cmp = vstorage->InternalComparator()->user_comparator();
+  std::vector<FileMetaData*> level_file = vstorage->LevelFiles(target_level);
+  for(int i = 0; i < vstorage->NumLevelFiles(target_level); i++) {
+    FileMetaData *f = level_file[i];
+    const Slice file_start = f->smallest.user_key();
+    const Slice file_end = f->largest.user_key();
+    if (begin != nullptr && user_cmp->CompareWithoutTimestamp(file_end, begin->user_key()) < 0) {
+    } else if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->user_key()) > 0) {
+    } else {
+      overlap_list.emplace_back(get_fname(f->fd.GetNumber()));
+    }
+  }
+}
 
 void set_deleted_time(int fnumber, int clock) {
   if(deleted_time.find(fnumber) == deleted_time.end()) {

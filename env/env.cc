@@ -407,8 +407,8 @@ class LegacyFileSystemWrapper : public FileSystem {
     return status_to_io_status(std::move(s));
   }
   IOStatus SetFileLifetime(std::string fname, 
-                                   uint64_t lifetime, int clock, bool flag, int level) override {
-    Status s = target_->SetFileLifetime(fname, lifetime, clock, flag, level);
+                                   uint64_t lifetime, int clock, bool flag, int level, std::vector<std::string> overlap_list) override {
+    Status s = target_->SetFileLifetime(fname, lifetime, clock, flag, level, overlap_list);
     return status_to_io_status(std::move(s));
   }
   IOStatus ReopenWritableFile(const std::string& fname,

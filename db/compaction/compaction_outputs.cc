@@ -16,6 +16,7 @@
 namespace ROCKSDB_NAMESPACE {
 
 extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
+extern void get_overlap(const FileMetaData &file, int target_level, Version *v, std::vector<std::string> &overlap_list);
 extern void set_deleted_time(int fnumber, int clock);
 extern int get_clock();
 extern std::string get_fname(uint64_t id);
@@ -32,16 +33,20 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   const int output_level = GetCompaction()->output_level();
   printf("CompactionOutputs::Finish number=%ld get_clock=%d output_level=%d start_level=%d num_input_level=%ld\n", meta->fnumber, get_clock(), output_level, GetCompaction()->start_level(), GetCompaction()->num_input_levels());
   get_predict(output_level, *meta, GetCompaction()->column_family_data()->current(), GetCompaction(), predict, predict_type, rank);
+  std::vector<std::string> overlap_list;
+  if(output_level + 1 <= 6) {
+    get_overlap(*meta, output_level + 1, GetCompaction()->column_family_data()->current(), overlap_list);
+  }
   set_deleted_time(meta->fnumber, predict + get_clock());
 
   //fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, (predict < 50) ? 1: output_level);
-  fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, output_level);
+  fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, output_level, overlap_list);
   if(!update_input_file_lifetime) {
     for(size_t i = 0; i < GetCompaction()->num_input_levels(); i++) {
       //printf("vector[%ld] element:\n", i);
       for(size_t j = 0; j < GetCompaction()->num_input_files(i); j++) {
         FileMetaData *tmp = GetCompaction()->input(i, j);
-        fs_->SetFileLifetime(get_fname(tmp->fd.GetNumber()), get_clock(), get_clock(), 1, output_level);
+        fs_->SetFileLifetime(get_fname(tmp->fd.GetNumber()), get_clock(), get_clock(), 1, output_level, std::vector<std::string> {});
       }
     }
     update_input_file_lifetime = 1;
