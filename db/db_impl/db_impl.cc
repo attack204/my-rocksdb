@@ -5878,6 +5878,7 @@ const int CompactLevel = 6;
 const int INF = 1e9;
 const int AVERAGE_LIFETIME_THRESHOLD = 1;
 double ans_wp;
+double ans_wp_no_set;
 int ans_reset_num;
 int ans_allocated_num;
 std::vector<int> compaction_level_list;
@@ -5985,7 +5986,7 @@ std::map<int, std::vector<life_meta> > life_profiling;
 //每50次Compact会调用此函数打印状态
 //printf profiling information
 void profiling_print() {
-  printf("Profiling write_amp=%lf allocated_num=%d reset_num=%d\n", ans_wp, ans_allocated_num, ans_reset_num);
+  printf("Profiling write_amp=%lf wp_no_set=%lf allocated_num=%d reset_num=%d\n", ans_wp, ans_wp_no_set, ans_allocated_num, ans_reset_num);
   for(int i = 0; i <= FlushLevel; i++) {
     printf("FlushLevel %d=%d\n", i, flush_level[i]);
   }
@@ -6450,6 +6451,9 @@ void SetDBImpl(DBImpl *db) {
 
 void set_write_amplification(double wp) {
   ans_wp = wp;
+}
+void set_write_amplification_no_set(double wp) {
+  ans_wp_no_set = wp;
 }
 void set_reset_num(int reset_num) {
   ans_reset_num = reset_num;
