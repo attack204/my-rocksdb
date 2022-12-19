@@ -40,6 +40,8 @@ for l in range(0, 7): #each level
         "-1": {"0": 0, "-1": 0},
         "1": {"0": 0, "-1": 0},
         "2": {"0": 0, "-1": 0},
+        "3": {"0": 0, "-1": 0},
+        "4": {"0": 0, "-1": 0},
         "-2": {"0": 0, "-1": 0},
         "-3": {"0": 0, "-1": 0},
         "-4": {"0": 0, "-1": 0},
@@ -51,6 +53,8 @@ for l in range(0, 7): #each level
         "-1": {"0": 0, "-1": 0},
         "1": {"0": 0, "-1": 0},
         "2": {"0": 0, "-1": 0},
+        "3": {"0": 0, "-1": 0},
+        "4": {"0": 0, "-1": 0},
         "-2": {"0": 0, "-1": 0},
         "-3": {"0": 0, "-1": 0},
         "-4": {"0": 0, "-1": 0},
@@ -62,6 +66,8 @@ for l in range(0, 7): #each level
         "-1": {"0": 0, "-1": 0},
         "1": {"0": 0, "-1": 0},
         "2": {"0": 0, "-1": 0},
+        "3": {"0": 0, "-1": 0},
+        "4": {"0": 0, "-1": 0},
         "-2": {"0": 0, "-1": 0},
         "-3": {"0": 0, "-1": 0},
         "-4": {"0": 0, "-1": 0},
@@ -73,10 +79,10 @@ for l in range(0, 7): #each level
     sum = 0
     data1_list = [] #compacted by unknown file
     data1_list_miss = []
-    datan1_list = [] #compacted by top level
-    datan1_list_miss = [] #compacted by top level but prediction is incorrent
-    data0_list = [] #compacted by current level and prediction is right
-    data0_list_miss = [] #compacted by current level but prediction is incorrent
+    data3_list = [] #compacted by top level
+    data3_list_miss = [] #compacted by top level but prediction is incorrent
+    data4_list = [] #compacted by current level and prediction is right
+    data4_list_miss = [] #compacted by current level but prediction is incorrent
     THRESHOLD = 5 * (l + 1)
 
     level0_num = 0 #compacted by current level num
@@ -96,16 +102,16 @@ for l in range(0, 7): #each level
                     data1_list.append(diff)
                 else:
                     data1_list_miss.append(diff)
-            elif type_list[i] < 0:
+            elif type_list[i] == 3:
                 if real_type[i] == -1: #compacted
-                    datan1_list.append(diff)
+                    data3_list.append(diff)
                 else:
-                    datan1_list_miss.append(diff)
-            elif type_list[i] == 0:
+                    data3_list_miss.append(diff)
+            elif type_list[i] == 4:
                 if real_type[i] == 0:  
-                    data0_list.append(diff)
+                    data4_list.append(diff)
                 else:
-                    data0_list_miss.append(diff) #type_list[i] == 0 but real_type[i] == 1
+                    data4_list_miss.append(diff) #type_list[i] == 0 but real_type[i] == 1
             
             tot = tot + 1
             kind_num[key1][key2] += 1
@@ -128,24 +134,26 @@ for l in range(0, 7): #each level
                 print("T%s S%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
     if((l != 4) and (l != 5) and (l != 6)): 
         continue
-    if(len(data0_list) != 0):
-        plt.hist(data0_list, bins=20, color="yellow")
-        plt.show()
-    if(len(data0_list_miss) != 0):
-        plt.hist(data0_list_miss, bins=20, color="orange")
-        plt.show()
-    if(len(datan1_list) != 0):
-        plt.hist(datan1_list, bins=20, color="red")
-        plt.show()
-    if(len(datan1_list_miss) != 0):
-        plt.hist(datan1_list_miss, bins=20, color="pink")
-        plt.show()
     if(len(data1_list) != 0):
-        plt.hist(data1_list, bins=20, color="black")
+        plt.hist(data1_list, bins=20, color="red")
         plt.show()
     if((len(data1_list_miss) != 0)):
-        plt.hist(data1_list_miss, bins=20, color="brown")
+        plt.hist(data1_list_miss, bins=20, color="orange")
         plt.show()
+    if(len(data3_list) != 0):
+        plt.hist(data3_list, bins=20, color="yellow")
+        plt.show()
+    if(len(data3_list_miss) != 0):
+        plt.hist(data3_list_miss, bins=20, color="green")
+        plt.show()
+    if(len(data4_list) != 0):
+        plt.hist(data4_list, bins=20, color="blue")
+        plt.show()
+    if(len(data4_list_miss) != 0):
+        plt.hist(data4_list_miss, bins=20, color="purple")
+        plt.show()
+
+
 
 
 #4 [0-9]* 0 [0-9]* -1

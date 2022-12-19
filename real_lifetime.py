@@ -46,9 +46,13 @@ for l in range(0, 6): #each level
     d1 = 0 if cnt0 == 0 else sum0 / cnt0
     d2 = 0 if cntn1 == 0 else sum1 / cntn1
     print("level=%d num=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, num, d, d1, d2, cnt0, cntn1))
+    plt.xlabel('lifetime')
+    plt.ylabel('number')
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=20, color="yellow")
         plt.show()
+    plt.xlabel('lifetime')
+    plt.ylabel('number')
     if(len(real_lifetime_list_n1) != 0):
         plt.hist(real_lifetime_list_n1, bins=20, color="red")
         plt.show()

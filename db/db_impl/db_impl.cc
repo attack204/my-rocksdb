@@ -6261,11 +6261,11 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
       int rank = get_rank(upper_level, *f, v, compaction_);
       tmp_rank = rank;
-      int T2 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
-      printf("T2 Prediction upper_level=%d number=%ld T2=%d\n", upper_level, file.fnumber, T2);
-      if(T2 < predict_) {
-        predict_ = T2 + pre_time;
-        predict_type_ = deep;
+      int T1 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
+      printf("Case1 Prediction upper_level=%d number=%ld Case1=%d\n", upper_level, file.fnumber, T1);
+      if(T1 < predict_) {
+        predict_ = T1 + pre_time;
+        predict_type_ = 1;
       }
      // dfs(level - 1, deep - 1, file, v, compaction_, pre_time + T2, predict_, predict_type_, tmp_rank);
     }
@@ -6329,20 +6329,93 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     predict_type_ = 0;
   } else {
 
-    // T2: level=5被level=1-4存在的compact
-    //实际上被level=3 compact掉的情况非常少，因为level=3本来就没有多少SST file
+    // Case1
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
 
+    // Case 2
+    // if(predict_ == INF && level + 1 <= CompactLevel && has_overlap(file, level + 1, v)) {
+    //   const InternalKey* begin = &file.smallest;
+    //   const InternalKey* end   = &file.largest;
+    //   auto vstorage = v->storage_info();
+    //   auto user_cmp = vstorage->InternalComparator()->user_comparator();
+    //   std::vector<FileMetaData*> level_file = vstorage->LevelFiles(level + 1);
+    //   for(int i = 0; i < vstorage->NumLevelFiles(level + 1); i++) {
+    //     FileMetaData *f = level_file[i];
+    //     const Slice file_start = f->smallest.user_key();
+    //     const Slice file_end = f->largest.user_key();
+    //     if (begin != nullptr && user_cmp->CompareWithoutTimestamp(file_end, begin->user_key()) < 0) {
+    //     } else if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->user_key()) > 0) {
+    //     } else {
+    //       predict_ = deleted_time[f->fd.GetNumber()] - get_clock();
+    //       predict_type_ = 2;
+    //       printf("Case2 number=%ld Predict=%d\n", file.fnumber, predict_);
+    //       break;
+    //     }
+    //   }
+    // } 
 
-    bool blockT3 = 0;
+    if(predict_ == INF) {
+      // Case 3: current_level_compaction
+      if(level + 1 <= CompactLevel && query_is_compacting(level)) {
+        int T1 = 1e9;
+        //1. has_overlap with upper level or start compact => T0
+        //2. has no overlap, no matter start compact or not => trivial move
+        //if(has_overlap(file, level + 1, v)) {
+        T1_rank = get_rank(level, file, v, compaction_);
+        T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
+        printf("Case3 number=%ld Predict=%d\n", file.fnumber, T1);
+        if(T1 < predict_) {
+          predict_ = T1;
+          predict_type_ = 3;
+        }
+      }
 
-    int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
-    if(!T3) T3 = get_recent_average_lifetime(level - 1);
-    printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
-    if(T3 < predict_) {
-      predict_ = T3;
-      predict_type_ = 1;
+      // Case 4
+
+      int T4 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
+      //if(!T4) T4 = get_recent_average_lifetime(level - 1);
+      if(T4) {
+        printf("Case4 number=%ld Predict=%d\n", file.fnumber, T4);
+        if(T4 < predict_) {
+          predict_ = T4;
+          predict_type_ = 4;
+        }
+      }
     }
+
+
+  }
+
+  if(predict_ == INF) predict_ = 1; //lifetime can't = 0
+  uint64_t number = get_number(file);
+  rank_[number] = T1_rank;
+  predict[number] = predict_;
+  printf("get_predict finish: number=%ld clock=%d level=%d predict_time=%d\n", number, get_clock(), level, predict[number]);
+  predict_type[number] = predict_type_;
+  if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
+    pre[number] = get_clock();
+  }
+
+
+  //T1: current_level_compaction
+    // if(level + 1 <= CompactLevel) {
+    //   int T1 = 1e9;
+    //   //1. has_overlap with upper level or start compact => T0
+    //   //2. has no overlap, no matter start compact or not => trivial move
+    //   if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
+    //     T1_rank = get_rank(level, file, v, compaction_);
+    //     T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
+    //     printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
+    //   } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
+    //     T1 = get_recent_average_lifetime(level) + 850;
+    //     blockT3 = 1;
+    //     printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
+    //   }
+    //   if(T1 < predict_) {
+    //     predict_ = T1;
+    //     predict_type_ = 0;
+    //   }
+    // }
 
 
     //T1: current_level_compaction
@@ -6374,17 +6447,8 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     //     predict_type_ = 1;
     //   }
     // }
-  }
 
-  if(predict_ == INF) predict_ = 1; //lifetime can't = 0
-  uint64_t number = get_number(file);
-  rank_[number] = T1_rank;
-  predict[number] = predict_;
-  printf("get_predict finish: number=%ld clock=%d level=%d predict_time=%d\n", number, get_clock(), level, predict[number]);
-  predict_type[number] = predict_type_;
-  if(level == 0) { //Flush的时候获取不到output，只能在这里设置了
-    pre[number] = get_clock();
-  }
+
 }
 
 //flush/compact的最后后调用此函数, 此函数可以调用最新的Version信息
