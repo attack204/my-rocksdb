@@ -4353,6 +4353,7 @@ Status DBImpl::GetLiveFilesChecksumInfo(FileChecksumList* checksum_list) {
 
 void DBImpl::GetColumnFamilyMetaData(ColumnFamilyHandle* column_family,
                                      ColumnFamilyMetaData* cf_meta) {
+  
   assert(column_family);
   auto* cfd =
       static_cast_with_check<ColumnFamilyHandleImpl>(column_family)->cfd();
@@ -6536,6 +6537,9 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
   printf("GetName=%s\n", rocksdb_impl->GetName().c_str());
   if(file_list.size() == 0) return true;
   ColumnFamilyMetaData meta;
+  if(rocksdb_impl->DefaultColumnFamily() == nullptr) {
+    return false;
+  }
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
   std::vector<std::string> input_file_names;
   int output_level = -1, count = 0;
@@ -6565,7 +6569,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
           count++;
           //printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
           input_file_names.emplace_back(file.name);
-          output_level = std::max(output_level, level + 1);
+          output_level = std::max(output_level, level);
         }
       }
     }
