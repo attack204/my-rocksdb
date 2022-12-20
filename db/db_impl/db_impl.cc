@@ -6387,7 +6387,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
   }
 
-  if(predict_ == INF) predict_ = 1; //lifetime can't = 0
+  if(predict_ == INF || predict_ < 0) predict_ = 1; //lifetime can't = 0
   uint64_t number = get_number(file);
   rank_[number] = T1_rank;
   predict[number] = predict_;
