@@ -108,7 +108,7 @@ for l in range(0, 7): #each level
                 else:
                     data3_list_miss.append(diff)
             elif type_list[i] == 4:
-                if real_type[i] == 0:  
+                if real_type[i] == -1:  
                     data4_list.append(diff)
                 else:
                     data4_list_miss.append(diff) #type_list[i] == 0 but real_type[i] == 1
@@ -132,25 +132,25 @@ for l in range(0, 7): #each level
         for key2 in kind_num[key1]:
             if(kind_num[key1][key2] != 0):
                 print("T%s S%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
-    if((l != 4) and (l != 5) and (l != 6)): 
+    if((l != 3) and (l != 4) and (l != 5) and (l != 6)): 
         continue
-    if(len(data1_list) != 0):
-        plt.hist(data1_list, bins=20, color="red")
+    if(len(data1_list) != 0): #short-lived
+        plt.hist(data1_list, bins=20, color="red") #upper
         plt.show()
     if((len(data1_list_miss) != 0)):
-        plt.hist(data1_list_miss, bins=20, color="orange")
+        plt.hist(data1_list_miss, bins=20, color="orange") #current
         plt.show()
     if(len(data3_list) != 0):
-        plt.hist(data3_list, bins=20, color="yellow")
+        plt.hist(data3_list, bins=20, color="yellow") #upper
         plt.show()
     if(len(data3_list_miss) != 0):
-        plt.hist(data3_list_miss, bins=20, color="green")
+        plt.hist(data3_list_miss, bins=20, color="green") #current
         plt.show()
     if(len(data4_list) != 0):
-        plt.hist(data4_list, bins=20, color="blue")
+        plt.hist(data4_list, bins=20, color="blue") #upper
         plt.show()
     if(len(data4_list_miss) != 0):
-        plt.hist(data4_list_miss, bins=20, color="purple")
+        plt.hist(data4_list_miss, bins=20, color="purple") #current
         plt.show()
 
 
