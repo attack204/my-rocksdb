@@ -5987,7 +5987,7 @@ std::map<int, std::vector<life_meta> > life_profiling;
 //每50次Compact会调用此函数打印状态
 //printf profiling information
 void profiling_print() {
-  printf("Profiling write_amp=%lf wp_no_set=%lf allocated_num=%d reset_num=%d\n", ans_wp, ans_wp_no_set, ans_allocated_num, ans_reset_num);
+  printf("Profiling wp1=%lf wp2=%lf  allocated_num=%d reset_num=%d\n", ans_wp_no_set, ans_wp, ans_allocated_num, ans_reset_num);
   for(int i = 0; i <= FlushLevel; i++) {
     printf("FlushLevel %d=%d\n", i, flush_level[i]);
   }
