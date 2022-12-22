@@ -6528,6 +6528,16 @@ void set_allocated_num(int allocated_num) {
 }
 
 
+extern int pre_compaction_num;
+int get_bg_compaction_scheduled_() {
+  ColumnFamilyMetaData meta;
+  if(rocksdb_impl->DefaultColumnFamily() == nullptr) {
+    return -1;
+  }
+  rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
+  printf("get_bg_compaction_scheduled_=%d", rocksdb_impl->get_bg_compaction_scheduled_());
+  return rocksdb_impl->get_bg_compaction_scheduled_(); 
+}
 bool DoPreCompaction(std::vector<uint64_t> file_list) {
   printf("Recieve Compaction Request Time=%d\n", get_clock());
   printf("file_list.size()=%ld\n", file_list.size());
@@ -6579,7 +6589,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list) {
      printf("ERROR:count not equal count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     return false;
   }
-  printf("Ready To PreCompaction output_level=%d\n", output_level);
+  printf("Ready To PreCompaction=%d bg_compaction_scheduled_=%d num_running_compactions_=%d unscheduled_compactions_=%d bg_bottom_compaction_scheduled_=%d output_level=%d\n", pre_compaction_num, rocksdb_impl->get_bg_compaction_scheduled_(), rocksdb_impl->get_num_running_compactions_(), rocksdb_impl->get_unscheduled_compactions_(), rocksdb_impl->get_bg_bottom_compaction_scheduled_(), output_level);
   
   CompactionOptions options;
   Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);

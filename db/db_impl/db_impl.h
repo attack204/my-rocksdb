@@ -187,7 +187,23 @@ class DBImpl : public DB {
 
   virtual ~DBImpl();
 
+
+  int get_unscheduled_compactions_() {
+    return unscheduled_compactions_;
+  }
   // ---- Implementations of the DB interface ----
+  int get_bg_bottom_compaction_scheduled_() {
+    return bg_bottom_compaction_scheduled_;
+  }
+
+  // count how many background compactions are running or have been scheduled
+  int get_bg_compaction_scheduled_() {
+    return bg_compaction_scheduled_;
+  }
+  int get_num_running_compactions_() {
+    return num_running_compactions_;
+  }
+  
 
   using DB::Resume;
   Status Resume() override;
