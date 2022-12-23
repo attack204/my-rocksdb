@@ -6262,13 +6262,12 @@ void dfs(int level, int deep, const FileMetaData &file, Version *v,  const Compa
 
       int rank = get_rank(upper_level, *f, v, compaction_);
       tmp_rank = rank;
-      int T1 =  CYCLE * (rank / level_len[upper_level]) + rank % level_len[upper_level];
+      int T1 =  CYCLE;
       printf("Case1 Prediction upper_level=%d number=%ld Case1=%d\n", upper_level, file.fnumber, T1);
       if(T1 < predict_) {
-        predict_ = T1 + pre_time;
+        predict_ = T1;
         predict_type_ = 1;
       }
-     // dfs(level - 1, deep - 1, file, v, compaction_, pre_time + T2, predict_, predict_type_, tmp_rank);
     }
   }
 }
@@ -6332,59 +6331,43 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
 
     // Case1
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
-
-    // Case 2
-    // if(predict_ == INF && level + 1 <= CompactLevel && has_overlap(file, level + 1, v)) {
-    //   const InternalKey* begin = &file.smallest;
-    //   const InternalKey* end   = &file.largest;
-    //   auto vstorage = v->storage_info();
-    //   auto user_cmp = vstorage->InternalComparator()->user_comparator();
-    //   std::vector<FileMetaData*> level_file = vstorage->LevelFiles(level + 1);
-    //   for(int i = 0; i < vstorage->NumLevelFiles(level + 1); i++) {
-    //     FileMetaData *f = level_file[i];
-    //     const Slice file_start = f->smallest.user_key();
-    //     const Slice file_end = f->largest.user_key();
-    //     if (begin != nullptr && user_cmp->CompareWithoutTimestamp(file_end, begin->user_key()) < 0) {
-    //     } else if (end != nullptr && user_cmp->CompareWithoutTimestamp(file_start, end->user_key()) > 0) {
-    //     } else {
-    //       predict_ = deleted_time[f->fd.GetNumber()] - get_clock();
-    //       predict_type_ = 2;
-    //       printf("Case2 number=%ld Predict=%d\n", file.fnumber, predict_);
-    //       break;
-    //     }
-    //   }
-    // } 
-
+    int T1 = 1e9, T4 = 1e9;
     if(predict_ == INF) {
-      // Case 3: current_level_compaction
+      // Case 2: current_level_compaction
       if(level + 1 <= CompactLevel && query_is_compacting(level)) {
-        int T1 = 1e9;
-        //1. has_overlap with upper level or start compact => T0
-        //2. has no overlap, no matter start compact or not => trivial move
-        //if(has_overlap(file, level + 1, v)) {
         T1_rank = get_rank(level, file, v, compaction_);
-        T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-        printf("Case3 number=%ld Predict=%d\n", file.fnumber, T1);
+        T1 = CYCLE * T1_rank;
+        printf("Case2 number=%ld Predict=%d\n", file.fnumber, T1);
         if(T1 < predict_) {
           predict_ = T1;
-          predict_type_ = 3;
+          predict_type_ = 2;
         }
       }
 
-      // Case 4
-
-      int T4 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
+      // Case 3
+      T4 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
       //if(!T4) T4 = get_recent_average_lifetime(level - 1);
       if(T4) {
-        printf("Case4 number=%ld Predict=%d\n", file.fnumber, T4);
+        printf("Case3 number=%ld Predict=%d\n", file.fnumber, T4);
         if(T4 < predict_) {
           predict_ = T4;
-          predict_type_ = 4;
+          predict_type_ = 3;
         }
       }
     }
 
-
+    //Case 4 trivial move
+    if(predict_type_ == 2 && T1 < T4 && level + 1 <= CompactLevel && !has_overlap(file, level + 1, v) && get_recent_average_lifetime(level + 1) != 0) {
+      printf("Case4 trivial move T4=%d T5=%d\n", CYCLE * get_rank(level + 1, file, v, compaction_), get_recent_average_lifetime(level + 1));
+      if(CYCLE * get_rank(level + 1, file, v, compaction_) < get_recent_average_lifetime(level + 1)) {
+        predict_type_ = 4;
+        predict_ = CYCLE * get_rank(level + 1, file, v, compaction_) + T1;
+      } else {
+        predict_type_ = 5;
+        predict_ = get_recent_average_lifetime(level + 1) + T1;
+      }
+      
+    }
   }
 
   if(predict_ == INF || predict_ < 0) predict_ = 1; //lifetime can't = 0
