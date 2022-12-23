@@ -175,10 +175,10 @@ for l in range(0, 7): #each level
         plt.hist(data4_list_miss, bins=20, color="black") #current
         plt.show()
     if(len(data5_list) != 0):
-        plt.hist(data4_list, bins=20, color="pink") # upper
+        plt.hist(data5_list, bins=20, color="pink") # upper
         plt.show()
     if(len(data5_list_miss) != 0):
-        plt.hist(data4_list_miss, bins=20, color="black") #current
+        plt.hist(data5_list_miss, bins=20, color="black") #current
         plt.show()
 
 
