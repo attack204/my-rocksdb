@@ -6319,6 +6319,7 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
   printf("get_predict begin: number=%ld clock=%d level=%d compact_level_number=%d\n", file.fnumber, get_clock(), level, compact_level[level]);
 
   predict_ = INF;
+  predict_type_ = 0;
   int T1_rank = 0;
   if(strstr(get_fname(file.fd.GetNumber()).c_str(), ".log") != nullptr) {
     predict_ = 1;
@@ -6359,13 +6360,13 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     //Case 4 trivial move
     if(predict_type_ == 2 && T1 < T4 && level + 1 <= CompactLevel && !has_overlap(file, level + 1, v) && get_recent_average_lifetime(level + 1) != 0) {
       printf("Case4 trivial move T4=%d T5=%d\n", CYCLE * get_rank(level + 1, file, v, compaction_), get_recent_average_lifetime(level + 1));
-      if(CYCLE * get_rank(level + 1, file, v, compaction_) < get_recent_average_lifetime(level + 1)) {
+      // if(CYCLE * get_rank(level + 1, file, v, compaction_) < get_recent_average_lifetime(level + 1)) {
+      //   predict_type_ = 4;
+      //   predict_ = CYCLE * get_rank(level + 1, file, v, compaction_) + T1;
+      // } else {
         predict_type_ = 4;
-        predict_ = CYCLE * get_rank(level + 1, file, v, compaction_) + T1;
-      } else {
-        predict_type_ = 5;
         predict_ = get_recent_average_lifetime(level + 1) + T1;
-      }
+      // }
       
     }
   }
