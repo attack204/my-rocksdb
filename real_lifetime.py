@@ -18,6 +18,7 @@ for line in open("lifetime.out"):
     real_type.append(int(line.split(' ')[4]))
     level_number.append(int(line.split(' ')[7]))
 
+tot_cnt = 0
 for l in range(0, 6): #each level
     real_lifetime_list_0 = []
     real_lifetime_list_n1 = []
@@ -46,14 +47,23 @@ for l in range(0, 6): #each level
     d1 = 0 if cnt0 == 0 else sum0 / cnt0
     d2 = 0 if cntn1 == 0 else sum1 / cntn1
     print("level=%d num=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, num, d, d1, d2, cnt0, cntn1))
-    plt.xlabel('lifetime')
-    plt.ylabel('number')
+    tot_cnt += num
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('lifetime', fontsize=24)
+    plt.ylabel('number', fontsize=24)
+   # plt.legend(loc='lower right', fontsize=18)
+
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+
     if(len(real_lifetime_list_0) != 0):
-        plt.hist(real_lifetime_list_0, bins=20, color="yellow")
+        plt.hist(real_lifetime_list_0, bins=50, color="yellow")
         plt.show()
-    plt.xlabel('lifetime')
-    plt.ylabel('number')
+    plt.xlabel('lifetime', fontsize=24)
+    plt.ylabel('number', fontsize=24)
     if(len(real_lifetime_list_n1) != 0):
-        plt.hist(real_lifetime_list_n1, bins=20, color="red")
+        plt.hist(real_lifetime_list_n1, bins=50, color="red")
         plt.show()
 
+print(tot_cnt)

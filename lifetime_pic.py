@@ -29,9 +29,20 @@ for i in range(0, len(x_list)):
     ans_list.append(predict_list[i] - lifetime_list[i])
     real_distribution.append(lifetime_list[i])
 
-plt.hist(ans_list, bins=100, color="green")
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman"]
+# plt.legend(loc='lower right', fontsize=18)
+font_size=15
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+
+plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+plt.ylabel('number', fontsize=font_size)
+plt.hist(ans_list, bins=1000, color="green")
 plt.show()
-plt.hist(real_distribution, bins=100, color="red")
+plt.xlabel('real lifetime', fontsize=font_size)
+plt.ylabel('number', fontsize=font_size)
+plt.hist(real_distribution, bins=1000, color="red")
 plt.show()
 
 for l in range(0, 7): #each level
@@ -147,38 +158,75 @@ for l in range(0, 7): #each level
     for key1 in kind_num:
         for key2 in kind_num[key1]:
             if(kind_num[key1][key2] != 0):
-                print("T%s S%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key1, key2, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
+                key11 = ""
+                key22 = ""
+                if key1 == "1":
+                    key11 = "2B"
+                elif key1 == "2":
+                    key11 = "1"
+                elif key1 == "3":
+                    key11 = "2A"
+                else:
+                    key11 = "3"
+                if key2 == "0":
+                    key22 = "1"
+                else:
+                    key22 = "2"
+                print("P%s D%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key11, key22, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
     if((l != 3) and (l != 4) and (l != 5) and (l != 6)): 
         continue
+    bins_num = 50
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data1_list) != 0): #short-lived
-        plt.hist(data1_list, bins=20, color="red") #upper
+        plt.hist(data1_list, bins=bins_num, color="red") #upper
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if((len(data1_list_miss) != 0)):
-        plt.hist(data1_list_miss, bins=20, color="orange") #current
+        plt.hist(data1_list_miss, bins=bins_num, color="orange") #current
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data2_list) != 0): #short-lived
-        plt.hist(data2_list, bins=20, color="yellow") #upper
+        plt.hist(data2_list, bins=bins_num, color="yellow") #upper
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if((len(data2_list_miss) != 0)):
-        plt.hist(data2_list_miss, bins=20, color="green") #current
+        plt.hist(data2_list_miss, bins=bins_num, color="green") #current
         plt.show()        
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data3_list) != 0):
-        plt.hist(data3_list, bins=20, color="blue") #upper
+        plt.hist(data3_list, bins=bins_num, color="blue") #upper
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data3_list_miss) != 0):
-        plt.hist(data3_list_miss, bins=20, color="purple") #current
+        plt.hist(data3_list_miss, bins=bins_num, color="purple") #current
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data4_list) != 0):
-        plt.hist(data4_list, bins=20, color="pink") # upper
+        plt.hist(data4_list, bins=bins_num, color="pink") # upper
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data4_list_miss) != 0):
-        plt.hist(data4_list_miss, bins=20, color="black") #current
+        plt.hist(data4_list_miss, bins=bins_num, color="black") #current
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data5_list) != 0):
-        plt.hist(data5_list, bins=20, color="pink") # upper
+        plt.hist(data5_list, bins=bins_num, color="pink") # upper
         plt.show()
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
     if(len(data5_list_miss) != 0):
-        plt.hist(data5_list_miss, bins=20, color="black") #current
+        plt.hist(data5_list_miss, bins=bins_num, color="black") #current
         plt.show()
 
 
