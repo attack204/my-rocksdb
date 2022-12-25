@@ -32,17 +32,25 @@ for i in range(0, len(x_list)):
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Times New Roman"]
 # plt.legend(loc='lower right', fontsize=18)
-font_size=15
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
+font_size=24
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.xlim([-200, 200])
+plt.ylim([0, 25000])
 
-plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-plt.ylabel('number', fontsize=font_size)
-plt.hist(ans_list, bins=1000, color="green")
+plt.xlabel('Predicted lifetime - real lifetime', fontsize=font_size)
+plt.ylabel('Number', fontsize=font_size)
+plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
+plt.hist(ans_list, bins=1000, color="gold")
 plt.show()
-plt.xlabel('real lifetime', fontsize=font_size)
-plt.ylabel('number', fontsize=font_size)
-plt.hist(real_distribution, bins=1000, color="red")
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.xlim([-100, 1200])
+plt.ylim([0, 15000])
+plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
+plt.xlabel('Real lifetime', fontsize=font_size)
+plt.ylabel('Number', fontsize=font_size)
+plt.hist(real_distribution, bins=1000, color="thistle")
 plt.show()
 
 for l in range(0, 7): #each level

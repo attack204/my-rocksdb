@@ -50,20 +50,22 @@ for l in range(0, 6): #each level
     tot_cnt += num
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('lifetime', fontsize=24)
-    plt.ylabel('number', fontsize=24)
-   # plt.legend(loc='lower right', fontsize=18)
-
+    plt.xlabel('Real lifetime', fontsize=24)
+    plt.ylabel('Number', fontsize=24)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
 
     if(len(real_lifetime_list_0) != 0):
-        plt.hist(real_lifetime_list_0, bins=50, color="yellow")
+        plt.hist(real_lifetime_list_0, bins=50, color="gold")
         plt.show()
-    plt.xlabel('lifetime', fontsize=24)
-    plt.ylabel('number', fontsize=24)
+        plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)       
+    plt.xlabel('Real lifetime', fontsize=24)
+    plt.ylabel('Number', fontsize=24)
     if(len(real_lifetime_list_n1) != 0):
-        plt.hist(real_lifetime_list_n1, bins=50, color="red")
+        plt.hist(real_lifetime_list_n1, bins=50, color="thistle")
         plt.show()
 
 print(tot_cnt)

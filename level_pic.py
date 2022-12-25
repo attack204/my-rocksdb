@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-font_size=15
-plt.xticks(fontsize=10)
-plt.yticks(fontsize=10)
+font_size=24
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Times New Roman"]
@@ -16,7 +16,9 @@ print(len(num_list))
 print(len(x_list))
 x = np.array(x_list)
 y = np.array(num_list)
-plt.xlabel('clock', fontsize=font_size)  
-plt.ylabel('level', fontsize=font_size)
-plt.scatter(x, y, s=5)
+plt.ylim([-0.5, 5.5])
+plt.xlim([9800, 9850])
+plt.xlabel('FC-Ticks', fontsize=font_size)  
+plt.ylabel('Level', fontsize=font_size)
+plt.scatter(x, y, s=40, c="gold")
 plt.show()
