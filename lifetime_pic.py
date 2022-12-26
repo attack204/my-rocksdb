@@ -2,6 +2,7 @@ from curses import keyname
 from pickle import BINSTRING
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 x_list = []
 type_list = []
 lifetime_list = []
@@ -31,10 +32,11 @@ for i in range(0, len(x_list)):
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Times New Roman"]
-# plt.legend(loc='lower right', fontsize=18)
+# plt.legend(loc='lower right', fontsize=ticks_size)
 font_size=24
-plt.xticks(fontsize=18)
-plt.yticks(fontsize=18)
+ticks_size=18
+plt.xticks(fontsize=ticks_size)
+plt.yticks(fontsize=ticks_size)
 plt.xlim([-200, 200])
 plt.ylim([0, 25000])
 
@@ -43,8 +45,8 @@ plt.ylabel('Number', fontsize=font_size)
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
 plt.hist(ans_list, bins=1000, color="gold")
 plt.show()
-plt.xticks(fontsize=18)
-plt.yticks(fontsize=18)
+plt.xticks(fontsize=ticks_size)
+plt.yticks(fontsize=ticks_size)
 plt.xlim([-100, 1200])
 plt.ylim([0, 15000])
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
@@ -181,60 +183,106 @@ for l in range(0, 7): #each level
                 else:
                     key22 = "2"
                 print("P%s D%s Accuracy=%.3lf Predict_Ave=%.3lf num=%d" % (key11, key22, kind_correct[key1][key2] / kind_num[key1][key2], kind_ave[key1][key2] / kind_num[key1][key2], kind_num[key1][key2]))
-    if((l != 3) and (l != 4) and (l != 5) and (l != 6)): 
+    if(l != 4): 
         continue
     bins_num = 50
+
+    #P1D1    
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    if(len(data2_list) != 0): #short-lived
+        plt.hist(data2_list, bins=bins_num, color="yellow") #upper
+        plt.show()
+    
+    #P1D2
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    if((len(data2_list_miss) != 0)):
+        plt.hist(data2_list_miss, bins=bins_num, color="green") #current
+        plt.show()        
+    
+    #P2AD1
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    if(len(data3_list) != 0):
+        plt.hist(data3_list, bins=bins_num, color="blue") #upper
+        plt.show()
+
+    #P2AD2
+    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
+    plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    if(len(data3_list_miss) != 0):
+        plt.hist(data3_list_miss, bins=bins_num, color="purple") #current
+        plt.show()
+
+    #P2BD1
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
     plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
     plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
     if(len(data1_list) != 0): #short-lived
         plt.hist(data1_list, bins=bins_num, color="red") #upper
         plt.show()
+
+    #P2BD2
     plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
     plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
     if((len(data1_list_miss) != 0)):
         plt.hist(data1_list_miss, bins=bins_num, color="orange") #current
         plt.show()
+
+    #P3AD1
     plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
     plt.ylabel('number', fontsize=font_size)
-    if(len(data2_list) != 0): #short-lived
-        plt.hist(data2_list, bins=bins_num, color="yellow") #upper
-        plt.show()
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
-    if((len(data2_list_miss) != 0)):
-        plt.hist(data2_list_miss, bins=bins_num, color="green") #current
-        plt.show()        
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
-    if(len(data3_list) != 0):
-        plt.hist(data3_list, bins=bins_num, color="blue") #upper
-        plt.show()
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
-    if(len(data3_list_miss) != 0):
-        plt.hist(data3_list_miss, bins=bins_num, color="purple") #current
-        plt.show()
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
     if(len(data4_list) != 0):
         plt.hist(data4_list, bins=bins_num, color="pink") # upper
         plt.show()
+
+    #P3AD2
     plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
     plt.ylabel('number', fontsize=font_size)
+    plt.xticks(fontsize=ticks_size)
+    plt.yticks(fontsize=ticks_size)
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.165)
     if(len(data4_list_miss) != 0):
         plt.hist(data4_list_miss, bins=bins_num, color="black") #current
-        plt.show()
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
-    if(len(data5_list) != 0):
-        plt.hist(data5_list, bins=bins_num, color="pink") # upper
-        plt.show()
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
-    if(len(data5_list_miss) != 0):
-        plt.hist(data5_list_miss, bins=bins_num, color="black") #current
         plt.show()
 
 
