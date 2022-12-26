@@ -80,7 +80,7 @@ IOStatus WritableFileWriter::Append(const Slice& data, uint32_t crc32c_checksum,
       size_t desired_capacity = 134217728;
       if (desired_capacity - buf_.CurrentSize() >= left ||
           (use_direct_io() && desired_capacity == max_buffer_size_)) {
-        printf("Extent buffer true now_capacity=%ld Capacity=%ld CurrentSize=%ld left=%ld\n", 
+        //printf("Extent buffer true now_capacity=%ld Capacity=%ld CurrentSize=%ld left=%ld\n", 
                buf_.Capacity() + desired_capacity, buf_.Capacity(), buf_.CurrentSize(), left);
         buf_.AllocateNewBuffer(desired_capacity, true);
        
