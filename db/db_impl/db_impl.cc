@@ -5914,7 +5914,7 @@ int get_ave_time(int level) {
 }
 
 void update_fname(uint64_t id, std::string name) {
-  printf("update_fname id=%ld name=%s", id, name.c_str());
+  //printf("update_fname id=%ld name=%s", id, name.c_str());
   id_to_name[id] = name;
 }
 std::string get_fname(uint64_t id) {
