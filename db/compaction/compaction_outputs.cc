@@ -40,7 +40,11 @@ Status CompactionOutputs::Finish(const Status& intput_status,
   set_deleted_time(meta->fnumber, predict + get_clock());
 
   //fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, (predict < 50) ? 1: output_level, overlap_list);
-  fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, output_level, overlap_list);
+  if(ENABLE_SHORT_WITH_TYPE0 != -1) {
+    fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, (predict < ENABLE_SHORT_WITH_TYPE0) ? 1 : output_level, overlap_list);
+  } else {
+    fs_->SetFileLifetime(get_fname(meta->fd.GetNumber()), predict + get_clock(), get_clock(), 0, output_level, overlap_list);
+  }
   if(!update_input_file_lifetime) {
     for(size_t i = 0; i < GetCompaction()->num_input_levels(); i++) {
       //printf("vector[%ld] element:\n", i);
