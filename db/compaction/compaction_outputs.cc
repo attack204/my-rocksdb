@@ -11,10 +11,10 @@
 #include "db/compaction/compaction_outputs.h"
 
 #include "db/builder.h"
+#include <rocksdb/plugin/zenfs/fs/zbd_zenfs.h>
 #include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
-
 extern void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank);
 extern void get_overlap(const FileMetaData &file, int target_level, Version *v, std::vector<std::string> &overlap_list);
 extern void set_deleted_time(int fnumber, int clock);
