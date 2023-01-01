@@ -6452,6 +6452,7 @@ void set_allocated_num(int allocated_num) {
 
 
 extern int pre_compaction_num;
+extern int precompaction_file_num;
 int get_bg_compaction_scheduled_() {
   ColumnFamilyMetaData meta;
   if(rocksdb_impl->DefaultColumnFamily() == nullptr) {
@@ -6507,6 +6508,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   printf("After FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
+  precompaction_file_num += file_list.size();
   if(file_list.empty()) {
     printf("FileList is empty\n");
     return false;
