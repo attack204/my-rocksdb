@@ -6482,10 +6482,24 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
   std::vector<uint64_t> tobe_compacted_list;
-  for(auto &x: file_list) {
-    printf("file id=%ld deletion_time=%d\n", x, pre[x] + predict[x]);
-    if(predict_type[x] == 2 && pre[x] + predict[x] <= MAX_LIFETIME) 
-      tobe_compacted_list.emplace_back(x);
+  for(auto &id: file_list) {
+    printf("file id=%ld deletion_time=%d\n", id, pre[id] + predict[id]);
+    bool flag = 0;
+    int l = 0;
+    for(auto &x: meta.levels) {
+      int level = x.level;
+      for(auto &file: x.files) {
+        if(id == file.file_number) {
+          l = level;
+          flag = 1; 
+          break;
+        }
+      }
+      if(flag == 1) break;
+    }
+
+    if(flag == 1 && l <= ENABLE_LIMIT_LEVEL && predict_type[id] == 2 && pre[id] + predict[id] <= MAX_LIFETIME) 
+      tobe_compacted_list.emplace_back(id);
   }
     
   file_list.clear();
