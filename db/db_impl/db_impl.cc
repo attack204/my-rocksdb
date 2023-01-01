@@ -6572,14 +6572,15 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
       if(flag == 1) break;
     }
   }
-  if(ENABLE_LIMIT_LEVEL == -1 || output_level > ENABLE_LIMIT_LEVEL) {
-    printf("output_level is %d limit_level= %d\n", output_level, ENABLE_LIMIT_LEVEL);
-    return false;
-  }
   if(count != static_cast<int>(file_list.size())) {
      printf("ERROR:count not equal count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     return false;
   }
+  if(ENABLE_LIMIT_LEVEL == -1 || output_level > ENABLE_LIMIT_LEVEL) {
+    printf("output_level is %d limit_level= %d\n", output_level, ENABLE_LIMIT_LEVEL);
+    return false;
+  }
+ 
   printf("Ready To PreCompaction=%d bg_compaction_scheduled_=%d num_running_compactions_=%d unscheduled_compactions_=%d bg_bottom_compaction_scheduled_=%d output_level=%d\n", pre_compaction_num, rocksdb_impl->get_bg_compaction_scheduled_(), rocksdb_impl->get_num_running_compactions_(), rocksdb_impl->get_unscheduled_compactions_(), rocksdb_impl->get_bg_bottom_compaction_scheduled_(), output_level);
   
   CompactionOptions options;
