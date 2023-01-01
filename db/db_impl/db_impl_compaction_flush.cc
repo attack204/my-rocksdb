@@ -1343,13 +1343,13 @@ Status DBImpl::CompactFilesImpl(
           "yet supported in CompactFiles()");
     }
   }
-
+  printf("Before Pick InputFiles\n");
   Status s = cfd->compaction_picker()->SanitizeCompactionInputFiles(
       &input_set, cf_meta, output_level);
   if (!s.ok()) {
     return s;
   }
-
+  printf("After Pick InputFiles\n");
   std::vector<CompactionInputFiles> input_files;
   s = cfd->compaction_picker()->GetCompactionInputsFromFileNumbers(
       &input_files, &input_set, version->storage_info(), compact_options);

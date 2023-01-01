@@ -5927,14 +5927,6 @@ std::string get_fname(uint64_t id) {
   
 }
 void update_average_lifetime(int level, int lifetime) {
-  // if(level == 5) {
-  //   printf("update_average_lifetime level=%d lifetime=%d\n", level, lifetime);
-  // }
-  // if(recent_level_lifetime_queue[level].size() != 0 && 
-  //    lifetime < (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size())) return ;
-  // if(level == 5 && recent_level_lifetime_queue[level].size() != 0) {
-  //   printf("update_average_lifetime level=%d lifetime=%d threshold=%ld\n", level, lifetime, (recent_level_lifetime[level] / recent_level_lifetime_queue[level].size()));
-  // }
   recent_level_lifetime_queue[level].push(lifetime);
   recent_level_lifetime[level] += lifetime;
   if(recent_level_lifetime_queue[level].size() > AVERAGE_LIFETIME_THRESHOLD) {
@@ -6381,59 +6373,6 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     pre[number] = get_clock();
   }
 
-
-  //T1: current_level_compaction
-    // if(level + 1 <= CompactLevel) {
-    //   int T1 = 1e9;
-    //   //1. has_overlap with upper level or start compact => T0
-    //   //2. has no overlap, no matter start compact or not => trivial move
-    //   if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
-    //     T1_rank = get_rank(level, file, v, compaction_);
-    //     T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-    //     printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
-    //   } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
-    //     T1 = get_recent_average_lifetime(level) + 850;
-    //     blockT3 = 1;
-    //     printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
-    //   }
-    //   if(T1 < predict_) {
-    //     predict_ = T1;
-    //     predict_type_ = 0;
-    //   }
-    // }
-
-
-    //T1: current_level_compaction
-    // if(level + 1 <= CompactLevel) {
-    //   int T1 = 1e9;
-    //   //1. has_overlap with upper level or start compact => T0
-    //   //2. has no overlap, no matter start compact or not => trivial move
-    //   if(has_overlap(file, level + 1, v) && query_is_compacting(level)) {
-    //     T1_rank = get_rank(level, file, v, compaction_);
-    //     T1 = CYCLE * (T1_rank / level_len[level]) + T1_rank % level_len[level];
-    //     printf("T1 Compaction Prediction number=%ld T1=%d\n", file.fnumber, T1);
-    //   } else if (!has_overlap(file, level + 1, v) && query_is_compacting(level) && level + 1 <= 5) {
-    //     T1 = get_recent_average_lifetime(level) + 850;
-    //     blockT3 = 1;
-    //     printf("T1 TrivialMove Prediction number=%ld T1=%d recent_i=%d i+1=%d\n", file.fnumber, T1, get_recent_average_lifetime(level), get_recent_average_lifetime(level + 1));
-    //   }
-    //   if(T1 < predict_) {
-    //     predict_ = T1;
-    //     predict_type_ = 0;
-    //   }
-    // }
-    // //T3: use average lifetime
-    // if((!blockT3) && (predict_ == INF || (predict_type_ == 0 && predict_ > get_recent_average_lifetime(level)) + 100)) { //only one way to arrive here: no overlap with top level, and the current level compaction not start
-    
-    //   int T3 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
-    //   printf("T3 Prediction number=%ld T3=%d\n", file.fnumber, T3);
-    //   if(T3 < predict_) {
-    //     predict_ = T3;
-    //     predict_type_ = 1;
-    //   }
-    // }
-
-
 }
 
 //flush/compact的最后后调用此函数, 此函数可以调用最新的Version信息
@@ -6522,7 +6461,7 @@ int get_bg_compaction_scheduled_() {
   printf("get_bg_compaction_scheduled_=%d", rocksdb_impl->get_bg_compaction_scheduled_());
   return rocksdb_impl->get_bg_compaction_scheduled_(); 
 }
-bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
+bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, int MAX_LIFETIME) {
   printf("Recieve Compaction Request Time=%d\n", get_clock());
   printf("file_list.size()=%ld\n", file_list.size());
 
@@ -6543,9 +6482,12 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
   std::vector<uint64_t> tobe_compacted_list;
-  for(auto &x: file_list) 
-    if(predict_type[x] == 2) 
+  for(auto &x: file_list) {
+    printf("file id=%ld deletion_time=%d\n", x, pre[x] + predict[x]);
+    if(predict_type[x] == 2 && pre[x] + predict[x] <= MAX_LIFETIME) 
       tobe_compacted_list.emplace_back(x);
+  }
+    
   file_list.clear();
   file_list.insert(file_list.begin(), tobe_compacted_list.begin(), tobe_compacted_list.end());
   printf("After FileList: ");
@@ -6600,7 +6542,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   CompactionOptions options;
   Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);
   if(!s.ok()) {
-    printf("ERROR PreCompaction fails");
+    printf("ERROR PreCompaction fails %s\n", s.getState());
     return false;
   }
   puts("After PreCompaction");
