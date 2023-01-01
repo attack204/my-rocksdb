@@ -6508,7 +6508,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   printf("After FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
-  precompaction_file_num += file_list.size();
+
   if(file_list.empty()) {
     printf("FileList is empty\n");
     return false;
@@ -6561,6 +6561,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
     printf("ERROR PreCompaction fails %s\n", s.getState());
     return false;
   }
+    precompaction_file_num += file_list.size();
   puts("After PreCompaction");
   ColumnFamilyMetaData new_meta;
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &new_meta);
