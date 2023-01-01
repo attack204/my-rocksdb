@@ -6513,7 +6513,6 @@ void set_allocated_num(int allocated_num) {
 
 
 extern int pre_compaction_num;
-extern int ENABLE_LIMIT_LEVEL;
 int get_bg_compaction_scheduled_() {
   ColumnFamilyMetaData meta;
   if(rocksdb_impl->DefaultColumnFamily() == nullptr) {
@@ -6523,7 +6522,7 @@ int get_bg_compaction_scheduled_() {
   printf("get_bg_compaction_scheduled_=%d", rocksdb_impl->get_bg_compaction_scheduled_());
   return rocksdb_impl->get_bg_compaction_scheduled_(); 
 }
-bool DoPreCompaction(std::vector<uint64_t> file_list) {
+bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   printf("Recieve Compaction Request Time=%d\n", get_clock());
   printf("file_list.size()=%ld\n", file_list.size());
 
