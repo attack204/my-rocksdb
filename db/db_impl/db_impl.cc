@@ -6556,6 +6556,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
 
 
   for(auto &id: file_list) {
+    bool flag = 0;
     for(auto &x: meta.levels) {
       int level = x.level;
       for(auto &file: x.files) {
@@ -6564,8 +6565,11 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
           //printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
           input_file_names.emplace_back(file.name);
           output_level = std::max(output_level, level);
+          flag = 1; 
+          break;
         }
       }
+      if(flag == 1) break;
     }
   }
   if(ENABLE_LIMIT_LEVEL == -1 || output_level > ENABLE_LIMIT_LEVEL) {
