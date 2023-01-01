@@ -6513,7 +6513,7 @@ void set_allocated_num(int allocated_num) {
 
 
 extern int pre_compaction_num;
-extern const int ENABLE_LIMIT_LEVEL;
+extern int ENABLE_LIMIT_LEVEL;
 int get_bg_compaction_scheduled_() {
   ColumnFamilyMetaData meta;
   if(rocksdb_impl->DefaultColumnFamily() == nullptr) {
