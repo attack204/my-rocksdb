@@ -6551,6 +6551,10 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   printf("After FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
+  if(file_list.empty()) {
+    printf("FileList is empty\n");
+    return false;
+  }
 
 
 
