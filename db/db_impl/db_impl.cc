@@ -6539,9 +6539,19 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   int output_level = -1, count = 0;
   //TODO: optimize
 
-  printf("FileList: ");
+  printf("Begining FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
+  std::vector<uint64_t> tobe_compacted_list;
+  for(auto &x: file_list) 
+    if(predict_type[x] == 2) 
+      tobe_compacted_list.emplace_back(x);
+  file_list.clear();
+  file_list.insert(file_list.begin(), tobe_compacted_list.begin(), tobe_compacted_list.end());
+  printf("After FileList: ");
+  for(auto &x: file_list) printf("%ld ", x);
+  puts("");
+
 
 
   puts("Rocksdb File:");
