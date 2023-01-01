@@ -6557,7 +6557,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   puts("Rocksdb File:");
   for(auto &x: meta.levels) {
     int level = x.level;
-    printf("level=%d: ", level);
+    printf("level=%d: size=%ld ", level, x.files.size());
     for(auto &file: x.files) {
       printf("%ld ", file.file_number);
     }
@@ -6595,7 +6595,10 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL) {
   
   CompactionOptions options;
   Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);
-
+  if(!s.ok()) {
+    printf("ERROR PreCompaction fails");
+    return false;
+  }
   puts("After PreCompaction");
   ColumnFamilyMetaData new_meta;
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &new_meta);
