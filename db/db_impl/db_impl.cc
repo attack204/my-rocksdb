@@ -6482,29 +6482,31 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   printf("Begining FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
-  std::vector<uint64_t> tobe_compacted_list;
-  for(auto &id: file_list) {
-    printf("file id=%ld deletion_time=%d\n", id, pre[id] + predict[id]);
-    bool flag = 0;
-    int l = 0;
-    for(auto &x: meta.levels) {
-      int level = x.level;
-      for(auto &file: x.files) {
-        if(id == file.file_number) {
-          l = level;
-          flag = 1; 
-          break;
+  if(ENABLE_LIMIT_LEVEL) {
+    std::vector<uint64_t> tobe_compacted_list;
+    for(auto &id: file_list) {
+      bool flag = 0;
+      int l = 0;
+      for(auto &x: meta.levels) {
+        int level = x.level;
+        for(auto &file: x.files) {
+          if(id == file.file_number) {
+            l = level;
+            flag = 1; 
+            break;
+          }
         }
+        if(flag == 1) break;
       }
-      if(flag == 1) break;
+      if(flag == 1)
+        printf("file id=%ld deletion_time=%d level=%d\n", id, pre[id] + predict[id], l);
+      if(flag == 1 && l <= ENABLE_LIMIT_LEVEL && predict_type[id] == 2 && pre[id] + predict[id] <= MAX_LIFETIME) 
+        tobe_compacted_list.emplace_back(id);
     }
-
-    if(flag == 1 && l <= ENABLE_LIMIT_LEVEL && predict_type[id] == 2 && pre[id] + predict[id] <= MAX_LIFETIME) 
-      tobe_compacted_list.emplace_back(id);
+    file_list.clear();
+    file_list.insert(file_list.begin(), tobe_compacted_list.begin(), tobe_compacted_list.end());
   }
-    
-  file_list.clear();
-  file_list.insert(file_list.begin(), tobe_compacted_list.begin(), tobe_compacted_list.end());
+
   printf("After FileList: ");
   for(auto &x: file_list) printf("%ld ", x);
   puts("");
