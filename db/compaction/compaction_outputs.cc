@@ -11,7 +11,7 @@
 #include "db/compaction/compaction_outputs.h"
 
 #include "db/builder.h"
-#include <rocksdb/plugin/zenfs/fs/zbd_zenfs.h>
+#include "rocksdb/plugin/zenfs/fs/zbd_zenfs.h"
 #include <iostream>
 
 namespace ROCKSDB_NAMESPACE {
