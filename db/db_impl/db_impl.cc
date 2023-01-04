@@ -6307,7 +6307,6 @@ void set_deleted_time(int fnumber, int clock) {
 }
 
 void get_predict(int level, const FileMetaData &file, Version *v, const Compaction* compaction_, int &predict_, int &predict_type_, int &tmp_rank) { 
-//  printf("smallest_key=%s largest_key=%s\n", file.smallest.user_key().ToString().c_str(), file.largest.user_key().ToString().c_str());
   printf("get_predict begin: number=%ld clock=%d level=%d compact_level_number=%d\n", file.fnumber, get_clock(), level, compact_level[level]);
 
   predict_ = INF;
@@ -6322,24 +6321,23 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
     predict_type_ = 0;
   } else {
 
-    // Case1
+    // Case2B:
     dfs(level, -1, file, v, compaction_, 0, predict_, predict_type_, tmp_rank); 
     int T1 = 1e9, T4 = 1e9;
     if(predict_ == INF) {
-      // Case 2: current_level_compaction
+      // Case 1
       if(level + 1 <= CompactLevel && query_is_compacting(level)) {
         T1_rank = get_rank(level, file, v, compaction_);
-        T1 = CYCLE * T1_rank;
+        T1 = CYCLE * T1_rank; 
         printf("Case2 number=%ld Predict=%d\n", file.fnumber, T1);
         if(T1 < predict_) {
           predict_ = T1;
-          predict_type_ = 2;
+          predict_type_ = 2; //
         }
       }
 
-      // Case 3
+      // Case 2A
       T4 = get_recent_average_lifetime(level); ///no way to predict the future compaction;
-      //if(!T4) T4 = get_recent_average_lifetime(level - 1);
       if(T4) {
         printf("Case3 number=%ld Predict=%d\n", file.fnumber, T4);
         if(T4 < predict_) {
@@ -6349,17 +6347,11 @@ void get_predict(int level, const FileMetaData &file, Version *v, const Compacti
       }
     }
 
-    //Case 4 trivial move
+    //Case 3 trivial move
     if(predict_type_ == 2 && T1 < T4 && level + 1 <= CompactLevel && !has_overlap(file, level + 1, v) && get_recent_average_lifetime(level + 1) != 0) {
       printf("Case4 trivial move T4=%d T5=%d\n", CYCLE * get_rank(level + 1, file, v, compaction_), get_recent_average_lifetime(level + 1));
-      // if(CYCLE * get_rank(level + 1, file, v, compaction_) < get_recent_average_lifetime(level + 1)) {
-      //   predict_type_ = 4;
-      //   predict_ = CYCLE * get_rank(level + 1, file, v, compaction_) + T1;
-      // } else {
-        predict_type_ = 4;
-        predict_ = get_recent_average_lifetime(level + 1) + T1;
-      // }
-      
+      predict_type_ = 4;
+      predict_ = get_recent_average_lifetime(level + 1) + T1;
     }
   }
 
@@ -6500,7 +6492,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
       }
       if(flag == 1)
         printf("file id=%ld deletion_time=%d level=%d\n", id, pre[id] + predict[id], l);
-      if(flag == 1 && l <= ENABLE_LIMIT_LEVEL && predict_type[id] == 2 && pre[id] + predict[id] <= MAX_LIFETIME) 
+      if(flag == 1 && l <= ENABLE_LIMIT_LEVEL && pre[id] + predict[id] <= get_clock() && predict_type[id] == 2 && pre[id] + predict[id] <= MAX_LIFETIME) 
         tobe_compacted_list.emplace_back(id);
     }
     file_list.clear();

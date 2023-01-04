@@ -35,21 +35,24 @@ for i in range(0, len(x_list)):
 
 
 print("total right rate=%.2lf"%(right / len(x_list)))
-plt.rcParams["font.family"] = "serif"
-plt.rcParams["font.serif"] = ["Times New Roman"]
-# plt.legend(loc='lower right', fontsize=ticks_size)
 font_size=24
 ticks_size=18
+
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman"]
 plt.xticks(fontsize=ticks_size)
 plt.yticks(fontsize=ticks_size)
 plt.xlim([-200, 200])
 plt.ylim([0, 25000])
-
-plt.xlabel('Predicted lifetime - real lifetime', fontsize=font_size)
+plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
 plt.ylabel('Number', fontsize=font_size)
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
 plt.hist(ans_list, bins=1000, color="gold")
 plt.show()
+
+
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times New Roman"]
 plt.xticks(fontsize=ticks_size)
 plt.yticks(fontsize=ticks_size)
 plt.xlim([-100, 1200])
@@ -57,7 +60,7 @@ plt.ylim([0, 15000])
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
 plt.xlabel('Real lifetime', fontsize=font_size)
 plt.ylabel('Number', fontsize=font_size)
-plt.hist(real_distribution, bins=1000, color="thistle")
+plt.hist(real_distribution, bins=1000, color="purple")
 plt.show()
 
 for l in range(0, 7): #each level
@@ -193,8 +196,10 @@ for l in range(0, 7): #each level
     bins_num = 50
 
     #P1D1
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -205,8 +210,10 @@ for l in range(0, 7): #each level
         plt.show()        
 
     #P1D2    
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -218,8 +225,10 @@ for l in range(0, 7): #each level
     
 
     #P2AD1
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -230,8 +239,10 @@ for l in range(0, 7): #each level
         plt.show()
 
     #P2AD2
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -243,8 +254,10 @@ for l in range(0, 7): #each level
 
 
     #P2BD1
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -257,8 +270,8 @@ for l in range(0, 7): #each level
     #P2BD2
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -269,8 +282,10 @@ for l in range(0, 7): #each level
         plt.show()
 
     #P3AD1
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -281,8 +296,10 @@ for l in range(0, 7): #each level
         plt.show()
 
     #P3AD2
-    plt.xlabel('predicted lifetime - real lifetime', fontsize=font_size)
-    plt.ylabel('number', fontsize=font_size)
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]
+    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
+    plt.ylabel('Number', fontsize=font_size)
     plt.xticks(fontsize=ticks_size)
     plt.yticks(fontsize=ticks_size)
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))

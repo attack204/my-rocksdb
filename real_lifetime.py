@@ -48,24 +48,25 @@ for l in range(0, 6): #each level
     d2 = 0 if cntn1 == 0 else sum1 / cntn1
     print("level=%d num=%d all_ave=%d ave_0=%d ave_n1=%d cnt0=%d cntn1=%d" % (l, num, d, d1, d2, cnt0, cntn1))
     tot_cnt += num
+    
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
     plt.xlabel('Real lifetime', fontsize=24)
     plt.ylabel('Number', fontsize=24)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
-
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=50, color="gold")
         plt.show()
-        plt.rcParams["font.family"] = "serif"
-    plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)       
+    
+    plt.rcParams["font.family"] = "serif"
+    plt.rcParams["font.serif"] = ["Times New Roman"]   
     plt.xlabel('Real lifetime', fontsize=24)
     plt.ylabel('Number', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)    
     if(len(real_lifetime_list_n1) != 0):
-        plt.hist(real_lifetime_list_n1, bins=50, color="thistle")
+        plt.hist(real_lifetime_list_n1, bins=50, color="purple")
         plt.show()
 
 print(tot_cnt)
