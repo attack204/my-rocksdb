@@ -3,6 +3,7 @@ from pickle import BINSTRING
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
+from matplotlib.pyplot import MultipleLocator
 x_list = []
 type_list = []
 lifetime_list = []
@@ -40,12 +41,14 @@ ticks_size=18
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Times New Roman"]
-plt.xticks(fontsize=ticks_size)
-plt.yticks(fontsize=ticks_size)
+plt.figure(figsize=(6.5, 3.2))
+plt.xticks(fontsize=ticks_size, weight="bold")
+plt.yticks(fontsize=ticks_size, weight="bold")
 plt.xlim([-200, 200])
 plt.ylim([0, 25000])
-plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-plt.ylabel('Number', fontsize=font_size)
+plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+plt.ylabel('Number', fontsize=font_size, weight="bold")
+plt.subplots_adjust(top=0.94, right=0.965, left=0.14, bottom=0.26)
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
 plt.hist(ans_list, bins=1000, color="gold")
 plt.show()
@@ -53,13 +56,15 @@ plt.show()
 
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["font.serif"] = ["Times New Roman"]
-plt.xticks(fontsize=ticks_size)
-plt.yticks(fontsize=ticks_size)
+plt.figure(figsize=(6.5, 3.2))
+plt.xticks(fontsize=ticks_size, weight="bold")
+plt.yticks(fontsize=ticks_size, weight="bold")
 plt.xlim([-100, 1200])
 plt.ylim([0, 15000])
 plt.gca().set_yticklabels([str(int(y / 1000)) + "k" for y in plt.gca().get_yticks()])
-plt.xlabel('Real lifetime', fontsize=font_size)
-plt.ylabel('Number', fontsize=font_size)
+plt.xlabel('Real lifetime', fontsize=font_size, weight="bold")
+plt.ylabel('Number', fontsize=font_size, weight="bold")
+plt.subplots_adjust(top=0.94, right=0.96, left=0.14, bottom=0.26)
 plt.hist(real_distribution, bins=1000, color="purple")
 plt.show()
 
@@ -198,13 +203,14 @@ for l in range(0, 7): #each level
     #P1D1
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.14, bottom=0.26)
     if((len(data2_list_miss) != 0)):
         plt.hist(data2_list_miss, bins=bins_num, color="green") #current
         plt.show()        
@@ -212,13 +218,14 @@ for l in range(0, 7): #each level
     #P1D2    
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.125, bottom=0.26)
     if(len(data2_list) != 0): #short-lived
         plt.hist(data2_list, bins=bins_num, color="yellow") #upper
         plt.show()
@@ -227,13 +234,14 @@ for l in range(0, 7): #each level
     #P2AD1
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.gca().yaxis.set_major_locator(MultipleLocator(10))
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.125, bottom=0.26)
     if(len(data3_list_miss) != 0):
         plt.hist(data3_list_miss, bins=bins_num, color="purple") #current
         plt.show()
@@ -241,13 +249,14 @@ for l in range(0, 7): #each level
     #P2AD2
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.gca().yaxis.set_major_locator(MultipleLocator(300))
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.16, bottom=0.26)
     if(len(data3_list) != 0):
         plt.hist(data3_list, bins=bins_num, color="blue") #upper
         plt.show()
@@ -256,13 +265,14 @@ for l in range(0, 7): #each level
     #P2BD1
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.11, bottom=0.26)
     if((len(data1_list_miss) != 0)):
         plt.hist(data1_list_miss, bins=bins_num, color="orange") #current
         plt.show()
@@ -270,13 +280,14 @@ for l in range(0, 7): #each level
     #P2BD2
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.14, bottom=0.26)
     if(len(data1_list) != 0): #short-lived
         plt.hist(data1_list, bins=bins_num, color="red") #upper
         plt.show()
@@ -284,13 +295,14 @@ for l in range(0, 7): #each level
     #P3AD1
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.165)
+    plt.subplots_adjust(top=0.94, right=0.97, left=0.1, bottom=0.265)
     if(len(data4_list_miss) != 0):
         plt.hist(data4_list_miss, bins=bins_num, color="black") #current
         plt.show()
@@ -298,13 +310,14 @@ for l in range(0, 7): #each level
     #P3AD2
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Predicted lifetime - Real lifetime', fontsize=font_size)
-    plt.ylabel('Number', fontsize=font_size)
-    plt.xticks(fontsize=ticks_size)
-    plt.yticks(fontsize=ticks_size)
+    plt.figure(figsize=(6.5, 3.2))
+    plt.xlabel('Lifetime prediction error (FC-ticks)', fontsize=font_size, weight="bold")
+    plt.ylabel('Number', fontsize=font_size, weight="bold")
+    plt.xticks(fontsize=ticks_size, weight="bold")
+    plt.yticks(fontsize=ticks_size, weight="bold")
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.subplots_adjust(top=0.99, right=0.99, left=0.125, bottom=0.16)
+    plt.subplots_adjust(top=0.94, right=0.99, left=0.125, bottom=0.26)
     if(len(data4_list) != 0):
         plt.hist(data4_list, bins=bins_num, color="pink") # upper
         plt.show()

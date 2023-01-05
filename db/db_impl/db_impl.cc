@@ -6540,7 +6540,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   }
   if(count != static_cast<int>(file_list.size())) {
      printf("ERROR:count not equal count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
-    return false;
+    //return false;
   }
   if(ENABLE_LIMIT_LEVEL && output_level > ENABLE_LIMIT_LEVEL) {
     printf("output_level is %d limit_level= %d\n", output_level, ENABLE_LIMIT_LEVEL);
