@@ -6468,6 +6468,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
   }
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &meta);
   std::vector<std::string> input_file_names;
+  std::vector<int> output_level_list;
   int output_level = -1, count = 0;
   //TODO: optimize
 
@@ -6531,6 +6532,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
           //printf("all_level=%ld all_file=%ld level=%d file_number=%ld\n", meta.levels.size(), x.files.size(), level, file.file_number);
           input_file_names.emplace_back(file.name);
           output_level = std::max(output_level, level + 1);
+          output_level_list.emplace_back(level + 1);
           flag = 1; 
           break;
         }
@@ -6542,6 +6544,10 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
      printf("ERROR:count not equal count=%d file_list.size()=%d\n", count, static_cast<int>(file_list.size()));
     //return false;
   }
+  if(count == 0) {
+    printf("count == 0, no need to do precompaction");
+    return false;
+  }
   if(ENABLE_LIMIT_LEVEL && output_level > ENABLE_LIMIT_LEVEL) {
     printf("output_level is %d limit_level= %d\n", output_level, ENABLE_LIMIT_LEVEL);
     return false;
@@ -6549,13 +6555,20 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
  
   printf("Ready To PreCompaction=%d bg_compaction_scheduled_=%d num_running_compactions_=%d unscheduled_compactions_=%d bg_bottom_compaction_scheduled_=%d output_level=%d\n", pre_compaction_num, rocksdb_impl->get_bg_compaction_scheduled_(), rocksdb_impl->get_num_running_compactions_(), rocksdb_impl->get_unscheduled_compactions_(), rocksdb_impl->get_bg_bottom_compaction_scheduled_(), output_level);
   
-  CompactionOptions options;
-  Status s = rocksdb_impl->CompactFiles(options, input_file_names, output_level);
-  if(!s.ok()) {
-    printf("ERROR PreCompaction fails %s\n", s.getState());
-    return false;
+  for(uint32_t i = 0; i < input_file_names.size(); i++) {
+    CompactionOptions options;
+    std::vector<std::string> input_file_list;
+    input_file_list.emplace_back(input_file_names[i]);
+    Status s = rocksdb_impl->CompactFiles(options, input_file_list, output_level_list[i]);
+    if(!s.ok()) {
+      printf("ERROR PreCompaction fails %s\n", s.getState());
+      //return false;
+    } else  {
+      precompaction_file_num ++;
+    }
   }
-    precompaction_file_num += file_list.size();
+
+  
   puts("After PreCompaction");
   ColumnFamilyMetaData new_meta;
   rocksdb_impl->GetColumnFamilyMetaData(rocksdb_impl->DefaultColumnFamily(), &new_meta);
