@@ -6559,6 +6559,7 @@ bool DoPreCompaction(std::vector<uint64_t> file_list, int ENABLE_LIMIT_LEVEL, in
     CompactionOptions options;
     std::vector<std::string> input_file_list;
     input_file_list.emplace_back(input_file_names[i]);
+    printf("Ready To Compac %s output_level=%d\n", input_file_names[i].c_str(), output_level_list[i]);
     Status s = rocksdb_impl->CompactFiles(options, input_file_list, output_level_list[i]);
     if(!s.ok()) {
       printf("ERROR PreCompaction fails %s\n", s.getState());
