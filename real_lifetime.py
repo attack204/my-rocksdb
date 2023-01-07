@@ -51,20 +51,22 @@ for l in range(0, 6): #each level
     
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]
-    plt.xlabel('Real lifetime', fontsize=24)
-    plt.ylabel('Number', fontsize=24)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
+    plt.xlabel('Real lifetime', fontsize=24, weight="bold")
+    plt.ylabel('Number', fontsize=24, weight="bold")
+    plt.xticks(fontsize=18, weight="bold")
+    plt.yticks(fontsize=18, weight="bold")
+    plt.subplots_adjust(top=0.94, right=0.96, left=0.16, bottom=0.15)
     if(len(real_lifetime_list_0) != 0):
         plt.hist(real_lifetime_list_0, bins=50, color="gold")
         plt.show()
     
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.serif"] = ["Times New Roman"]   
-    plt.xlabel('Real lifetime', fontsize=24)
-    plt.ylabel('Number', fontsize=24)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)    
+    plt.xlabel('Real lifetime', fontsize=24, weight="bold")
+    plt.ylabel('Number', fontsize=24, weight="bold")
+    plt.xticks(fontsize=18, weight="bold")
+    plt.yticks(fontsize=18, weight="bold")
+    plt.subplots_adjust(top=0.94, right=0.96, left=0.16, bottom=0.15)    
     if(len(real_lifetime_list_n1) != 0):
         plt.hist(real_lifetime_list_n1, bins=50, color="purple")
         plt.show()
